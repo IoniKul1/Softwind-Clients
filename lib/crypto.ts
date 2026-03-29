@@ -17,7 +17,9 @@ export function encrypt(text: string): string {
 }
 
 export function decrypt(ciphertext: string): string {
-  const [ivHex, authTagHex, encryptedHex] = ciphertext.split(':')
+  const parts = ciphertext.split(':')
+  if (parts.length !== 3) throw new Error('Invalid ciphertext format: expected "iv:authTag:ciphertext"')
+  const [ivHex, authTagHex, encryptedHex] = parts
   const iv = Buffer.from(ivHex, 'hex')
   const authTag = Buffer.from(authTagHex, 'hex')
   const encrypted = Buffer.from(encryptedHex, 'hex')
