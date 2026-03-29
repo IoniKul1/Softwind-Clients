@@ -90,6 +90,29 @@ export async function getItems(
   })
 }
 
+// Normalize fieldData values to the format framer-api expects
+function normalizeFieldData(fieldData: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {}
+  for (const [id, entry] of Object.entries(fieldData)) {
+    if (!entry) { result[id] = entry; continue }
+    const { type, value } = entry
+    switch (type) {
+      case 'image':
+      case 'file':
+        // framer-api expects a URL string, not an object
+        result[id] = { type, value: typeof value === 'object' && value !== null ? (value.url ?? null) : value }
+        break
+      case 'array':
+        // gallery: array of {url} objects → array of URL strings
+        result[id] = { type, value: Array.isArray(value) ? value.map((v: any) => typeof v === 'object' ? (v.url ?? v) : v) : value }
+        break
+      default:
+        result[id] = entry
+    }
+  }
+  return result
+}
+
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,
@@ -100,7 +123,8 @@ export async function updateItemAndPublish(
     const cols = await framer.getCollections()
     const col = cols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
-    await col.addItems([item as any])
+    const normalized = { ...item, fieldData: normalizeFieldData(item.fieldData) }
+    await col.addItems([normalized as any])
     const published = await framer.publish()
     await framer.deploy(published.deployment.id)
   })
