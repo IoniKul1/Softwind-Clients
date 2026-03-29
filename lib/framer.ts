@@ -34,13 +34,18 @@ export async function getCollectionFields(
     const col = cols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
     const fields = await col.getFields()
-    return fields.map((f: any) => ({
-      id: f.id,
-      name: f.name,
-      type: f.type,
-      userEditable: f.userEditable,
-      cases: f.cases,
-    }))
+    return fields.map((f: any) => {
+      const rawCases = f.cases
+      // Framer enum cases may be strings or objects — normalize to strings
+      const cases = Array.isArray(rawCases)
+        ? rawCases.map((c: any) => {
+            if (typeof c === 'string') return c
+            // Try common property names used by framer-api
+            return c?.name ?? c?.value ?? c?.id ?? String(c)
+          })
+        : []
+      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
+    })
   })
 }
 
