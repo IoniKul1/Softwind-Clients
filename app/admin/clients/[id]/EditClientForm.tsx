@@ -18,7 +18,6 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
   const [form, setForm] = useState({
     name: defaultName,
     email: defaultEmail,
-    password: '',
     projectName: defaultProjectName,
     framerProjectUrl: defaultFramerProjectUrl,
     framerApiKey: '',
@@ -60,10 +59,6 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
         <div>
           <label className={labelClass}>Email</label>
           <input type="email" className={inputClass} value={form.email} onChange={e => set('email', e.target.value)} required />
-        </div>
-        <div>
-          <label className={labelClass}>Nueva contraseña (dejar vacío para no cambiar)</label>
-          <input type="password" className={inputClass} value={form.password} onChange={e => set('password', e.target.value)} minLength={8} />
         </div>
         <hr className="border-neutral-800" />
         <div>

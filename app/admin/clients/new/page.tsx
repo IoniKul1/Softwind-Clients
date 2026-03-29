@@ -9,7 +9,6 @@ export default function NewClientPage() {
   const [form, setForm] = useState({
     name: '',
     email: '',
-    password: '',
     projectName: '',
     framerProjectUrl: '',
     framerApiKey: '',
@@ -56,11 +55,6 @@ export default function NewClientPage() {
           <input type="email" className={inputClass} value={form.email}
             onChange={e => set('email', e.target.value)} required />
         </div>
-        <div>
-          <label className={labelClass}>Contraseña inicial</label>
-          <input type="password" className={inputClass} value={form.password}
-            onChange={e => set('password', e.target.value)} required minLength={8} />
-        </div>
         <hr className="border-neutral-800" />
         <div>
           <label className={labelClass}>Nombre del proyecto</label>
@@ -80,6 +74,7 @@ export default function NewClientPage() {
             placeholder="fr_..." required />
         </div>
         {error && <p className="text-red-400 text-xs">{error}</p>}
+        <p className="text-xs text-neutral-500">El cliente recibirá un email con el link de acceso.</p>
         <button
           type="submit"
           disabled={loading}

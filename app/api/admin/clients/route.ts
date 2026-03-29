@@ -11,24 +11,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { name, email, password, projectName, framerProjectUrl, framerApiKey } = await req.json()
+  const { name, email, projectName, framerProjectUrl, framerApiKey } = await req.json()
 
-  if (!name || !email || !password || !projectName || !framerProjectUrl || !framerApiKey) {
+  if (!name || !email || !projectName || !framerProjectUrl || !framerApiKey) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
   const adminClient = createAdminClient()
 
-  // Create auth user with role in app_metadata
-  const { data: { user: newUser }, error: createError } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    app_metadata: { role: 'client' },
-    email_confirm: true,
+  // Invite user — sends magic link email, sets role in app_metadata
+  const { data: { user: newUser }, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    data: { role: 'client' },
   })
 
-  if (createError || !newUser) {
-    return NextResponse.json({ error: createError?.message ?? 'Error al crear usuario' }, { status: 500 })
+  if (inviteError || !newUser) {
+    return NextResponse.json({ error: inviteError?.message ?? 'Error al crear usuario' }, { status: 500 })
+  }
+
+  // Set app_metadata.role (inviteUserByEmail puts data in user_metadata, not app_metadata)
+  const { error: updateError } = await adminClient.auth.admin.updateUserById(newUser.id, {
+    app_metadata: { role: 'client' },
+  })
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
   // Create profile
