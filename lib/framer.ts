@@ -73,7 +73,7 @@ export async function updateItemAndPublish(
     const cols = await framer.getCollections()
     const col = cols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
-    await col.addItems([item])
+    await col.addItems([item as any])
     const published = await framer.publish()
     await framer.deploy(published.deployment.id)
   })
