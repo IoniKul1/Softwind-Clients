@@ -31,6 +31,10 @@ export default async function EditItemPage({
   const item = items.find((i) => i.id === itemId)
   if (!item) notFound()
 
+  // Serialize to plain objects — framer-api returns class instances which can't be passed to Client Components
+  const plainItem = JSON.parse(JSON.stringify(item))
+  const plainFields = JSON.parse(JSON.stringify(fields))
+
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <Link href={`/collections/${collectionId}`} className="text-xs text-neutral-500 hover:text-white mb-6 inline-block">
@@ -39,8 +43,8 @@ export default async function EditItemPage({
       <h2 className="text-xl font-semibold mb-6">{item.slug}</h2>
       <ItemEditClient
         collectionId={collectionId}
-        item={item}
-        fields={fields}
+        item={plainItem}
+        fields={plainFields}
       />
     </div>
   )

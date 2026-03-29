@@ -30,6 +30,9 @@ export default async function AdminEditItemPage({
   const item = items.find((i) => i.id === itemId)
   if (!item) notFound()
 
+  const plainItem = JSON.parse(JSON.stringify(item))
+  const plainFields = JSON.parse(JSON.stringify(fields))
+
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <Link
@@ -41,8 +44,8 @@ export default async function AdminEditItemPage({
       <h2 className="text-xl font-semibold mb-6">{item.slug}</h2>
       <ItemEditClient
         collectionId={collectionId}
-        item={item}
-        fields={fields}
+        item={plainItem}
+        fields={plainFields}
         saveUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/items/${itemId}`}
         backUrl={`/admin/clients/${clientId}/collections/${collectionId}`}
       />
