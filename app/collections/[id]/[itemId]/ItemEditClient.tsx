@@ -7,9 +7,11 @@ interface Props {
   collectionId: string
   item: FramerItem
   fields: FramerField[]
+  saveUrl?: string
+  backUrl?: string
 }
 
-export default function ItemEditClient({ collectionId, item, fields }: Props) {
+export default function ItemEditClient({ collectionId, item, fields, saveUrl, backUrl }: Props) {
   const [fieldData, setFieldData] = useState<Record<string, FramerFieldValue>>(item.fieldData)
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -21,7 +23,7 @@ export default function ItemEditClient({ collectionId, item, fields }: Props) {
   async function handleSave() {
     setStatus('saving')
     setErrorMsg('')
-    const res = await fetch(`/api/collections/${collectionId}/items/${item.id}`, {
+    const res = await fetch(saveUrl ?? `/api/collections/${collectionId}/items/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ slug: item.slug, fieldData }),

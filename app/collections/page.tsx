@@ -17,11 +17,17 @@ export default async function CollectionsPage() {
     return <p className="text-neutral-500 text-sm">No tenés ningún proyecto configurado todavía.</p>
   }
 
-  const apiKey = decrypt(project.framer_api_key_encrypted)
-  const collections = await getCollections(project.framer_project_url, apiKey)
+  let collections: Awaited<ReturnType<typeof getCollections>> = []
+  try {
+    const apiKey = decrypt(project.framer_api_key_encrypted)
+    collections = await getCollections(project.framer_project_url, apiKey)
+  } catch (e: any) {
+    return <p className="text-red-400 text-sm">Error al conectar con Framer: {e?.message ?? String(e)}</p>
+  }
 
   return (
     <div className="flex flex-col gap-3">
+      {collections.length === 0 && <p className="text-neutral-500 text-sm">No hay colecciones en este proyecto.</p>}
       {collections.map((col) => (
         <Link
           key={col.id}
