@@ -13,17 +13,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const { name, email, password, projectName, framerProjectUrl, framerApiKey, projectId } = await req.json()
+
+  if (!name || !email || !projectName || !framerProjectUrl) {
+    return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
+  }
+  if (!projectId && !framerApiKey) {
+    return NextResponse.json({ error: 'Se requiere una Framer API Key para crear el proyecto' }, { status: 400 })
+  }
+
   const adminClient = createAdminClient()
 
   // Update auth user (email + optional password)
   const authUpdate: Record<string, string> = { email }
   if (password) authUpdate.password = password
-  await adminClient.auth.admin.updateUserById(id, authUpdate)
+  const { error: authError } = await adminClient.auth.admin.updateUserById(id, authUpdate)
+  if (authError) return NextResponse.json({ error: authError.message }, { status: 500 })
 
   // Update profile name
-  await adminClient.from('profiles').update({ name }).eq('id', id)
+  const { error: profileError } = await adminClient.from('profiles').update({ name }).eq('id', id)
+  if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 })
 
-  // Update project
+  // Update or insert project
   const projectUpdate: Record<string, string> = {
     name: projectName,
     framer_project_url: framerProjectUrl,
@@ -31,14 +41,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (framerApiKey) {
     projectUpdate.framer_api_key_encrypted = encrypt(framerApiKey)
   }
+
   if (projectId) {
-    await adminClient.from('projects').update(projectUpdate).eq('id', projectId)
+    const { error } = await adminClient.from('projects').update(projectUpdate).eq('id', projectId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   } else {
-    await adminClient.from('projects').insert({
+    const { error } = await adminClient.from('projects').insert({
       client_user_id: id,
       ...projectUpdate,
-      framer_api_key_encrypted: framerApiKey ? encrypt(framerApiKey) : '',
     })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
