@@ -44,6 +44,16 @@ export async function getCollectionFields(
   })
 }
 
+// Recursively convert framer-api class instances to plain objects
+function toPlain(v: any): any {
+  if (v === null || v === undefined) return v
+  if (typeof v !== 'object') return v
+  if (Array.isArray(v)) return v.map(toPlain)
+  return Object.fromEntries(
+    Object.entries(Object.assign({}, v)).map(([k, val]) => [k, toPlain(val)])
+  )
+}
+
 export async function getItems(
   projectUrl: string,
   apiKey: string,
@@ -58,7 +68,7 @@ export async function getItems(
       id: item.id,
       slug: item.slug,
       draft: item.draft,
-      fieldData: item.fieldData ?? {},
+      fieldData: toPlain(item.fieldData ?? {}),
     }))
   })
 }
