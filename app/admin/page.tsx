@@ -1,13 +1,11 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export default async function AdminPage() {
-  const supabase = await createClient()
   const adminClient = createAdminClient()
 
-  // Get all client profiles
-  const { data: profiles } = await supabase
+  // Get all client profiles (bypass RLS with admin client)
+  const { data: profiles } = await adminClient
     .from('profiles')
     .select('*, projects(name)')
     .eq('role', 'client')
