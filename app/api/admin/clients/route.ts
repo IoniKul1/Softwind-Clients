@@ -32,11 +32,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Create profile
-  await adminClient.from('profiles').insert({
+  const { error: profileError } = await adminClient.from('profiles').insert({
     id: newUser.id,
     role: 'client',
     name,
   })
+  if (profileError) {
+    return NextResponse.json({ error: profileError.message }, { status: 500 })
+  }
 
   // Create project with encrypted API key
   const { error: projectError } = await adminClient.from('projects').insert({

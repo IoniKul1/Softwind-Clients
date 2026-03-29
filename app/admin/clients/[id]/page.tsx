@@ -10,7 +10,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*, projects(*)')
+    .select('*, projects(id, name, framer_project_url)')
     .eq('id', id)
     .single()
 

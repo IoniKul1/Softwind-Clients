@@ -9,7 +9,7 @@ export default async function AdminPage() {
   // Get all client profiles
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('*, projects(*)')
+    .select('*, projects(name)')
     .eq('role', 'client')
     .order('created_at', { ascending: false })
 

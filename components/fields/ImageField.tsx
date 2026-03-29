@@ -19,7 +19,7 @@ export function ImageField({ fieldId, label, value, onChange }: Props) {
     const ext = compressed.type === 'image/webp' ? 'webp' : file.name.split('.').pop()
     const key = `uploads/${fieldId}/${Date.now()}.${ext}`
 
-    const res = await fetch(`/api/upload-url?key=${key}&contentType=${compressed.type}`)
+    const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(compressed.type)}`)
     const { url: presignedUrl } = await res.json()
 
     await fetch(presignedUrl, {

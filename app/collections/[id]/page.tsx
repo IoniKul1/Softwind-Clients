@@ -10,7 +10,7 @@ export default async function ItemsPage({ params }: { params: Promise<{ id: stri
 
   const { data: project } = await supabase
     .from('projects')
-    .select('*')
+    .select('framer_project_url, framer_api_key_encrypted')
     .eq('client_user_id', user!.id)
     .single()
 

@@ -21,7 +21,7 @@ export function GalleryField({ fieldId, label, value, onChange }: Props) {
       const compressed = await compressImage(file)
       const ext = compressed.type === 'image/webp' ? 'webp' : file.name.split('.').pop()
       const key = `uploads/${fieldId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const res = await fetch(`/api/upload-url?key=${key}&contentType=${compressed.type}`)
+      const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(compressed.type)}`)
       const { url: presignedUrl } = await res.json()
       await fetch(presignedUrl, { method: 'PUT', body: compressed, headers: { 'Content-Type': compressed.type } })
       const publicBase = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? '').replace(/\/$/, '')
