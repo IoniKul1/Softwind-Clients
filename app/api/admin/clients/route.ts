@@ -19,21 +19,15 @@ export async function POST(req: NextRequest) {
 
   const adminClient = createAdminClient()
 
-  // Invite user — sends magic link email, sets role in app_metadata
-  const { data: { user: newUser }, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: { role: 'client' },
-  })
-
-  if (inviteError || !newUser) {
-    return NextResponse.json({ error: inviteError?.message ?? 'Error al crear usuario' }, { status: 500 })
-  }
-
-  // Set app_metadata.role (inviteUserByEmail puts data in user_metadata, not app_metadata)
-  const { error: updateError } = await adminClient.auth.admin.updateUserById(newUser.id, {
+  // Create user without sending email
+  const { data: { user: newUser }, error: createError } = await adminClient.auth.admin.createUser({
+    email,
     app_metadata: { role: 'client' },
+    email_confirm: true,
   })
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
+
+  if (createError || !newUser) {
+    return NextResponse.json({ error: createError?.message ?? 'Error al crear usuario' }, { status: 500 })
   }
 
   // Create profile
@@ -53,10 +47,20 @@ export async function POST(req: NextRequest) {
     framer_project_url: framerProjectUrl,
     framer_api_key_encrypted: encrypt(framerApiKey),
   })
-
   if (projectError) {
     return NextResponse.json({ error: projectError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  // Generate magic link for the client to use
+  const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
+    type: 'magiclink',
+    email,
+    options: {
+      redirectTo: `${req.nextUrl.origin}/auth/callback`,
+    },
+  })
+
+  const magicLink = linkError ? null : linkData?.properties?.action_link ?? null
+
+  return NextResponse.json({ ok: true, magicLink })
 }
