@@ -44,14 +44,26 @@ export async function getCollectionFields(
   })
 }
 
-// Recursively convert framer-api class instances to plain objects
+// Recursively convert framer-api class instances to plain objects.
+// Framer uses non-enumerable prototype properties, so we walk the chain.
 function toPlain(v: any): any {
   if (v === null || v === undefined) return v
   if (typeof v !== 'object') return v
   if (Array.isArray(v)) return v.map(toPlain)
-  return Object.fromEntries(
-    Object.entries(Object.assign({}, v)).map(([k, val]) => [k, toPlain(val)])
-  )
+
+  const result: Record<string, any> = {}
+  let proto = v
+  while (proto && proto !== Object.prototype) {
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      if (key === 'constructor' || key in result) continue
+      try {
+        const val = v[key]
+        if (typeof val !== 'function') result[key] = toPlain(val)
+      } catch {}
+    }
+    proto = Object.getPrototypeOf(proto)
+  }
+  return result
 }
 
 export async function getItems(
