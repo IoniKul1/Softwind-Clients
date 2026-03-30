@@ -9,6 +9,7 @@ interface Props {
   fields: FramerField[]
   createUrl: string
   backUrl: string
+  uploadBasePrefix?: string
 }
 
 function emptyFieldData(fields: FramerField[]): Record<string, FramerFieldValue> {
@@ -45,7 +46,7 @@ function emptyFieldData(fields: FramerField[]): Record<string, FramerFieldValue>
   return result
 }
 
-export default function ItemCreateClient({ fields, createUrl, backUrl }: Props) {
+export default function ItemCreateClient({ fields, createUrl, backUrl, uploadBasePrefix }: Props) {
   const router = useRouter()
   const editableFields = fields.filter((f) => f.userEditable !== false)
   const [slug, setSlug] = useState('')
@@ -99,6 +100,7 @@ export default function ItemCreateClient({ fields, createUrl, backUrl }: Props) 
           field={field}
           value={fieldData[field.id]}
           onChange={handleChange}
+          uploadPrefix={uploadBasePrefix && slug.trim() ? `${uploadBasePrefix}/${slug.trim()}` : undefined}
         />
       ))}
 

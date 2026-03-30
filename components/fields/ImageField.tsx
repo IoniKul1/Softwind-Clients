@@ -8,16 +8,18 @@ interface Props {
   label: string
   value: { url: string } | null
   onChange: (value: { url: string }) => void
+  uploadPrefix?: string
 }
 
-export function ImageField({ fieldId, label, value, onChange }: Props) {
+export function ImageField({ fieldId, label, value, onChange, uploadPrefix }: Props) {
   const [uploading, setUploading] = useState(false)
 
   async function handleFile(file: File) {
     setUploading(true)
     const compressed = await compressImage(file)
     const ext = compressed.type === 'image/webp' ? 'webp' : file.name.split('.').pop()
-    const key = `uploads/${fieldId}/${Date.now()}.${ext}`
+    const base = uploadPrefix ?? `uploads/${fieldId}`
+    const key = `${base}/${fieldId}/${Date.now()}.${ext}`
 
     const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(compressed.type)}`)
     const { url: presignedUrl } = await res.json()

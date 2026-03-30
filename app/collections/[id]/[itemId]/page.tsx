@@ -13,6 +13,7 @@ export default async function EditItemPage({
   const { id: collectionId, itemId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const userId = user!.id
 
   const { data: project } = await supabase
     .from('projects')
@@ -43,6 +44,7 @@ export default async function EditItemPage({
         item={plainItem}
         fields={plainFields}
         backUrl={`/collections/${collectionId}`}
+        uploadPrefix={`clients/${userId}/${collectionId}/${item.slug}`}
       />
     </div>
   )

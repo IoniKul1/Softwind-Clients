@@ -8,19 +8,21 @@ interface Props {
   label: string
   value: Array<{ url: string }> | null
   onChange: (value: Array<{ url: string }>) => void
+  uploadPrefix?: string
 }
 
-export function GalleryField({ fieldId, label, value, onChange }: Props) {
+export function GalleryField({ fieldId, label, value, onChange, uploadPrefix }: Props) {
   const [uploading, setUploading] = useState(false)
   const urls = value ?? []
 
   async function handleFiles(files: FileList) {
     setUploading(true)
     const newUrls: Array<{ url: string }> = []
+    const base = uploadPrefix ?? `uploads/${fieldId}`
     for (const file of Array.from(files)) {
       const compressed = await compressImage(file)
       const ext = compressed.type === 'image/webp' ? 'webp' : file.name.split('.').pop()
-      const key = `uploads/${fieldId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const key = `${base}/${fieldId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(compressed.type)}`)
       const { url: presignedUrl } = await res.json()
       await fetch(presignedUrl, { method: 'PUT', body: compressed, headers: { 'Content-Type': compressed.type } })

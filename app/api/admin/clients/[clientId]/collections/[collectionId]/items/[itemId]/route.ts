@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { decrypt } from '@/lib/crypto'
 import { updateItemAndPublish, deleteItemAndPublish } from '@/lib/framer'
+import { deleteByPrefix } from '@/lib/r2'
 
 export const runtime = 'nodejs'
 
@@ -66,8 +67,13 @@ export async function DELETE(
 
   const apiKey = decrypt(project.framer_api_key_encrypted)
 
+  const slug = req.nextUrl.searchParams.get('slug')
+
   try {
     await deleteItemAndPublish(project.framer_project_url, apiKey, collectionId, itemId)
+    if (slug) {
+      await deleteByPrefix(`clients/${clientId}/${collectionId}/${slug}/`).catch(() => {})
+    }
     return NextResponse.json({ ok: true })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 })

@@ -11,9 +11,10 @@ interface Props {
   saveUrl?: string
   deleteUrl?: string
   backUrl?: string
+  uploadPrefix?: string
 }
 
-export default function ItemEditClient({ collectionId, item, fields, saveUrl, deleteUrl, backUrl }: Props) {
+export default function ItemEditClient({ collectionId, item, fields, saveUrl, deleteUrl, backUrl, uploadPrefix }: Props) {
   const router = useRouter()
   const [fieldData, setFieldData] = useState<Record<string, FramerFieldValue>>(item.fieldData)
   const [draft, setDraft] = useState(item.draft ?? false)
@@ -46,7 +47,7 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
     if (!confirm('¿Eliminar este item? Esta acción no se puede deshacer.')) return
     setStatus('saving')
     const url = deleteUrl ?? `/api/collections/${collectionId}/items/${item.id}`
-    const res = await fetch(url, { method: 'DELETE' })
+    const res = await fetch(`${url}?slug=${encodeURIComponent(item.slug)}`, { method: 'DELETE' })
     if (res.ok) {
       router.push(backUrl ?? `/collections/${collectionId}`)
     } else {
@@ -66,6 +67,7 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
           field={field}
           value={fieldData[field.id]}
           onChange={handleChange}
+          uploadPrefix={uploadPrefix}
         />
       ))}
 

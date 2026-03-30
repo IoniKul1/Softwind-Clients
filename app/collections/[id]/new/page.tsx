@@ -8,6 +8,7 @@ export default async function NewItemPage({ params }: { params: Promise<{ id: st
   const { id: collectionId } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const userId = user!.id
 
   const { data: project } = await supabase
     .from('projects')
@@ -35,6 +36,7 @@ export default async function NewItemPage({ params }: { params: Promise<{ id: st
         fields={plainFields}
         createUrl={`/api/collections/${collectionId}/items`}
         backUrl={`/collections/${collectionId}`}
+        uploadBasePrefix={`clients/${userId}/${collectionId}`}
       />
     </div>
   )

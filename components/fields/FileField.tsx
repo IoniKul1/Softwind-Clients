@@ -7,14 +7,16 @@ interface Props {
   label: string
   value: { url: string; name?: string } | null
   onChange: (value: { url: string; name: string }) => void
+  uploadPrefix?: string
 }
 
-export function FileField({ fieldId, label, value, onChange }: Props) {
+export function FileField({ fieldId, label, value, onChange, uploadPrefix }: Props) {
   const [uploading, setUploading] = useState(false)
 
   async function handleFile(file: File) {
     setUploading(true)
-    const key = `uploads/${fieldId}/${Date.now()}-${file.name}`
+    const base = uploadPrefix ?? `uploads/${fieldId}`
+    const key = `${base}/${fieldId}/${Date.now()}-${file.name}`
     const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${file.type}`)
     const { url: presignedUrl } = await res.json()
     await fetch(presignedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })

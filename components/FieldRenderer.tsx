@@ -17,9 +17,10 @@ interface Props {
   field: FramerField
   value: FramerFieldValue | undefined
   onChange: (fieldId: string, value: FramerFieldValue) => void
+  uploadPrefix?: string
 }
 
-export function FieldRenderer({ field, value, onChange }: Props) {
+export function FieldRenderer({ field, value, onChange, uploadPrefix }: Props) {
   const v = value?.value
 
   switch (field.type) {
@@ -103,6 +104,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
           label={field.name}
           value={v as any ?? null}
           onChange={(val) => onChange(field.id, { type: 'image', value: val })}
+          uploadPrefix={uploadPrefix}
         />
       )
     case 'file':
@@ -112,6 +114,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
           label={field.name}
           value={v as any ?? null}
           onChange={(val) => onChange(field.id, { type: 'file', value: val })}
+          uploadPrefix={uploadPrefix}
         />
       )
     case 'array':
@@ -121,6 +124,7 @@ export function FieldRenderer({ field, value, onChange }: Props) {
           label={field.name}
           value={v as any ?? null}
           onChange={(val) => onChange(field.id, { type: 'array', value: val })}
+          uploadPrefix={uploadPrefix}
         />
       )
     default:

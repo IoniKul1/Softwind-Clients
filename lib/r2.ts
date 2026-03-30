@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 function getClient() {
@@ -25,4 +25,15 @@ export async function getPresignedUploadUrl(
     new PutObjectCommand({ Bucket: BUCKET(), Key: key, ContentType: contentType }),
     { expiresIn }
   )
+}
+
+export async function deleteByPrefix(prefix: string): Promise<void> {
+  const client = getClient()
+  const bucket = BUCKET()
+  const list = await client.send(new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix }))
+  if (!list.Contents?.length) return
+  await client.send(new DeleteObjectsCommand({
+    Bucket: bucket,
+    Delete: { Objects: list.Contents.map((o) => ({ Key: o.Key! })), Quiet: true },
+  }))
 }

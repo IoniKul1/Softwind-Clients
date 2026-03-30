@@ -39,6 +39,7 @@ export default async function AdminNewItemPage({
         fields={plainFields}
         createUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/items`}
         backUrl={`/admin/clients/${clientId}/collections/${collectionId}`}
+        uploadBasePrefix={`clients/${clientId}/${collectionId}`}
       />
     </div>
   )
