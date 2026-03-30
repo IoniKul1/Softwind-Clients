@@ -154,6 +154,31 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
+export async function createItemAndPublish(
+  projectUrl: string,
+  apiKey: string,
+  collectionId: string,
+  item: { slug: string; draft?: boolean; fieldData: Record<string, any> }
+): Promise<void> {
+  await withFramer(projectUrl, apiKey, async (framer) => {
+    const fieldData = normalizeFieldData(item.fieldData)
+
+    const managedCols = await framer.getManagedCollections()
+    const managedCol = managedCols.find((c: any) => c.id === collectionId)
+    if (managedCol) {
+      await managedCol.addItems([{ ...item, fieldData } as any])
+    } else {
+      const cols = await framer.getCollections()
+      const col = cols.find((c: any) => c.id === collectionId)
+      if (!col) throw new Error(`Collection ${collectionId} not found`)
+      await (col as any).addItems([{ ...item, fieldData }])
+    }
+
+    const published = await framer.publish()
+    await framer.deploy(published.deployment.id)
+  })
+}
+
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,

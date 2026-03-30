@@ -21,10 +21,18 @@ export default async function ItemsPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div>
-      <Link href="/collections" className="text-xs text-neutral-500 hover:text-white mb-6 inline-block">
-        ← Volver
-      </Link>
-      <div className="flex flex-col gap-3 mt-4">
+      <div className="flex items-center justify-between mb-6">
+        <Link href="/collections" className="text-xs text-neutral-500 hover:text-white">
+          ← Volver
+        </Link>
+        <Link
+          href={`/collections/${collectionId}/new`}
+          className="text-xs border border-neutral-700 rounded-full px-4 py-2 hover:border-neutral-400 transition"
+        >
+          + Nuevo item
+        </Link>
+      </div>
+      <div className="flex flex-col gap-3">
         {items.length === 0 && (
           <p className="text-neutral-500 text-sm">No hay items en esta colección.</p>
         )}
