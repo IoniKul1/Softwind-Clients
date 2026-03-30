@@ -1,8 +1,13 @@
+interface EnumCase {
+  id: string
+  name: string
+}
+
 interface Props {
   fieldId: string
   label: string
   value: string | null
-  cases: string[]
+  cases: EnumCase[]
   onChange: (value: string) => void
 }
 
@@ -16,7 +21,7 @@ export function EnumField({ label, value, cases, onChange }: Props) {
         className="bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-neutral-500 transition"
       >
         <option value="">— Seleccioná —</option>
-        {cases.map(c => <option key={c} value={c}>{c}</option>)}
+        {cases.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
     </div>
   )

@@ -1,5 +1,5 @@
 import { connect } from 'framer-api'
-import type { FramerCollection, FramerField, FramerItem } from './types'
+import type { FramerCollection, FramerEnumCase, FramerField, FramerItem } from './types'
 
 async function withFramer<T>(
   projectUrl: string,
@@ -36,17 +36,16 @@ export async function getCollectionFields(
     const fields = await col.getFields()
     return fields.map((f: any) => {
       const rawCases = f.cases
-      // Framer enum cases may be strings or objects — normalize to strings
-      const cases = Array.isArray(rawCases)
+      // Return {id, name} objects — the canvas requires the case ID when writing back
+      const cases: FramerEnumCase[] = Array.isArray(rawCases)
         ? rawCases.map((c: any) => {
-            if (typeof c === 'string') return c
-            // Walk prototype chain to access getters (framer-api uses private class fields)
+            if (typeof c === 'string') return { id: c, name: c }
             const plain = toPlain(c)
-            const name = plain.name ?? plain.id
-            if (typeof name === 'string' && name) return name
-            try { const n = c.name; if (typeof n === 'string' && n) return n } catch {}
-            try { const i = c.id; if (typeof i === 'string' && i) return i } catch {}
-            return String(c)
+            const id = (typeof plain.id === 'string' && plain.id) ? plain.id
+              : (() => { try { const i = c.id; if (typeof i === 'string' && i) return i } catch {} return String(c) })()
+            const name = (typeof plain.name === 'string' && plain.name) ? plain.name
+              : (() => { try { const n = c.name; if (typeof n === 'string' && n) return n } catch {} return id })()
+            return { id, name }
           })
         : []
       return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
@@ -76,12 +75,13 @@ function toPlain(v: any): any {
   return result
 }
 
-// Normalize enum field values from objects (EnumCase instances) to strings
+// Normalize enum field values from objects (EnumCase instances) to the case ID string.
+// The canvas validates enum entries by ID, not display name.
 function normalizeEnumValues(fieldData: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {}
   for (const [id, entry] of Object.entries(fieldData)) {
     if (entry?.type === 'enum' && typeof entry.value === 'object' && entry.value !== null) {
-      result[id] = { ...entry, value: entry.value.name ?? entry.value.id ?? null }
+      result[id] = { ...entry, value: entry.value.id ?? entry.value.name ?? null }
     } else {
       result[id] = entry
     }
@@ -135,22 +135,6 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
-// The canvas setCollectionItemAttributes2 / addCollectionItems2 handlers treat enum
-// fieldData entries as raw case values, not {type,value} typed wrappers.  Passing a
-// typed wrapper causes String({...}) = "[object Object]" in the canvas enum validator.
-// Unwrap only enum entries to their plain string value; all other types stay wrapped.
-function unwrapEnumEntries(fieldData: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {}
-  for (const [id, entry] of Object.entries(fieldData)) {
-    if (entry?.type === 'enum') {
-      result[id] = entry.value ?? null
-    } else {
-      result[id] = entry
-    }
-  }
-  return result
-}
-
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,
@@ -158,16 +142,15 @@ export async function updateItemAndPublish(
   item: FramerItem
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
-    const normalized = normalizeFieldData(item.fieldData)
+    const fieldData = normalizeFieldData(item.fieldData)
 
     // Try ManagedCollection first (plugin-managed CMS collections).
     const managedCols = await framer.getManagedCollections()
     const managedCol = managedCols.find((c: any) => c.id === collectionId)
     if (managedCol) {
-      await managedCol.addItems([{ ...item, fieldData: normalized } as any])
+      await managedCol.addItems([{ ...item, fieldData } as any])
     } else {
       // Regular (manually-managed) collection: use CollectionItem.setAttributes.
-      // The canvas handler expects enum values as raw strings, not {type,value} wrappers.
       const cols = await framer.getCollections()
       const col = cols.find((c: any) => c.id === collectionId)
       if (!col) throw new Error(`Collection ${collectionId} not found`)
@@ -176,7 +159,6 @@ export async function updateItemAndPublish(
       const collectionItem = collectionItems.find((ci: any) => ci.id === item.id)
       if (!collectionItem) throw new Error(`Item ${item.id} not found in collection ${collectionId}`)
 
-      const fieldData = unwrapEnumEntries(normalized)
       await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
     }
 

@@ -36,12 +36,17 @@ export type FramerFieldType =
   | 'enum'
   | 'array'
 
+export interface FramerEnumCase {
+  id: string
+  name: string
+}
+
 export interface FramerField {
   id: string
   name: string
   type: FramerFieldType
   userEditable?: boolean
-  cases?: string[]
+  cases?: FramerEnumCase[]
 }
 
 export interface FramerFieldValue {
