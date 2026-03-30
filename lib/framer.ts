@@ -44,10 +44,8 @@ export async function getCollectionFields(
             const plain = toPlain(c)
             const name = plain.name ?? plain.id
             if (typeof name === 'string' && name) return name
-            // Last-resort: try direct property access
             try { const n = c.name; if (typeof n === 'string' && n) return n } catch {}
             try { const i = c.id; if (typeof i === 'string' && i) return i } catch {}
-            console.error('[framer] enum case could not be normalized:', JSON.stringify(plain), 'keys:', Object.getOwnPropertyNames(Object.getPrototypeOf(c) ?? {}))
             return String(c)
           })
         : []
@@ -128,7 +126,6 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
         break
       case 'enum':
         // enum value may be an object (EnumCase) — extract the name string
-        console.error('[framer] enum field', id, 'value type:', typeof value, 'value:', JSON.stringify(value))
         result[id] = { type, value: typeof value === 'object' && value !== null ? (value.name ?? value.id ?? null) : value }
         break
       default:
@@ -145,8 +142,11 @@ export async function updateItemAndPublish(
   item: FramerItem
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
-    const cols = await framer.getCollections()
-    const col = cols.find((c: any) => c.id === collectionId)
+    // ManagedCollection.addItems uses addManagedCollectionItems2 which properly
+    // handles the {type, value} field data format. Collection.addItems uses
+    // addCollectionItems2 which treats the entire entry object as the raw value.
+    const managedCols = await framer.getManagedCollections()
+    const col = managedCols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
     const normalized = { ...item, fieldData: normalizeFieldData(item.fieldData) }
     await col.addItems([normalized as any])
