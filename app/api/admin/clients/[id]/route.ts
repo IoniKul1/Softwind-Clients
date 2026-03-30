@@ -37,7 +37,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     framer_project_url: framerProjectUrl,
   }
   if (framerApiKey) {
-    projectUpdate.framer_api_key_encrypted = encrypt(framerApiKey)
+    try {
+      projectUpdate.framer_api_key_encrypted = encrypt(framerApiKey)
+    } catch (e: any) {
+      return NextResponse.json({ error: `Error al cifrar API key: ${e?.message ?? String(e)}` }, { status: 500 })
+    }
   }
 
   if (projectId) {

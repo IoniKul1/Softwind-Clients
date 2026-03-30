@@ -41,11 +41,18 @@ export async function POST(req: NextRequest) {
   }
 
   // Create project with encrypted API key
+  let encryptedKey: string
+  try {
+    encryptedKey = encrypt(framerApiKey)
+  } catch (e: any) {
+    return NextResponse.json({ error: `Error al cifrar API key: ${e?.message ?? String(e)}` }, { status: 500 })
+  }
+
   const { error: projectError } = await adminClient.from('projects').insert({
     client_user_id: newUser.id,
     name: projectName,
     framer_project_url: framerProjectUrl,
-    framer_api_key_encrypted: encrypt(framerApiKey),
+    framer_api_key_encrypted: encryptedKey,
   })
   if (projectError) {
     return NextResponse.json({ error: projectError.message }, { status: 500 })
