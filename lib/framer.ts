@@ -40,8 +40,15 @@ export async function getCollectionFields(
       const cases = Array.isArray(rawCases)
         ? rawCases.map((c: any) => {
             if (typeof c === 'string') return c
-            // Try common property names used by framer-api
-            return c?.name ?? c?.value ?? c?.id ?? String(c)
+            // Walk prototype chain to access getters (framer-api uses private class fields)
+            const plain = toPlain(c)
+            const name = plain.name ?? plain.id
+            if (typeof name === 'string' && name) return name
+            // Last-resort: try direct property access
+            try { const n = c.name; if (typeof n === 'string' && n) return n } catch {}
+            try { const i = c.id; if (typeof i === 'string' && i) return i } catch {}
+            console.error('[framer] enum case could not be normalized:', JSON.stringify(plain), 'keys:', Object.getOwnPropertyNames(Object.getPrototypeOf(c) ?? {}))
+            return String(c)
           })
         : []
       return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
@@ -121,6 +128,7 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
         break
       case 'enum':
         // enum value may be an object (EnumCase) — extract the name string
+        console.error('[framer] enum field', id, 'value type:', typeof value, 'value:', JSON.stringify(value))
         result[id] = { type, value: typeof value === 'object' && value !== null ? (value.name ?? value.id ?? null) : value }
         break
       default:
