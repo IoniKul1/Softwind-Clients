@@ -75,20 +75,6 @@ function toPlain(v: any): any {
   return result
 }
 
-// Normalize enum field values from objects (EnumCase instances) to the case ID string.
-// The canvas validates enum entries by ID, not display name.
-function normalizeEnumValues(fieldData: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {}
-  for (const [id, entry] of Object.entries(fieldData)) {
-    if (entry?.type === 'enum' && typeof entry.value === 'object' && entry.value !== null) {
-      result[id] = { ...entry, value: entry.value.id ?? entry.value.name ?? null }
-    } else {
-      result[id] = entry
-    }
-  }
-  return result
-}
-
 export async function getItems(
   projectUrl: string,
   apiKey: string,
@@ -98,13 +84,46 @@ export async function getItems(
     const cols = await framer.getCollections()
     const col = cols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
+
+    // Build name→id maps for enum fields.
+    // Framer stores enum values as case *names* in fieldData, but the canvas
+    // API requires case *IDs* when writing. Convert at read time so the whole
+    // system works with IDs consistently.
+    const fields = await col.getFields()
+    const enumNameToId: Record<string, Record<string, string>> = {}
+    for (const f of fields as any[]) {
+      if (f.type !== 'enum' || !Array.isArray(f.cases)) continue
+      const map: Record<string, string> = {}
+      for (const c of f.cases) {
+        const plain = toPlain(c)
+        const id = (typeof plain.id === 'string' && plain.id) ? plain.id : String(c)
+        const name = (typeof plain.name === 'string' && plain.name) ? plain.name : id
+        map[name] = id
+      }
+      enumNameToId[f.id] = map
+    }
+
     const items = await col.getItems()
-    return items.map((item: any) => ({
-      id: item.id,
-      slug: item.slug,
-      draft: item.draft,
-      fieldData: normalizeEnumValues(toPlain(item.fieldData ?? {})),
-    }))
+    return items.map((item: any) => {
+      const raw = toPlain(item.fieldData ?? {})
+      const fieldData: Record<string, any> = {}
+      for (const [fid, entry] of Object.entries(raw) as [string, any][]) {
+        if (entry?.type === 'enum') {
+          let val = entry.value
+          if (val && typeof val === 'object') {
+            const plain = toPlain(val)
+            val = plain.id ?? plain.name ?? null
+          }
+          if (typeof val === 'string' && enumNameToId[fid]?.[val]) {
+            val = enumNameToId[fid][val]
+          }
+          fieldData[fid] = { ...entry, value: val }
+        } else {
+          fieldData[fid] = entry
+        }
+      }
+      return { id: item.id, slug: item.slug, draft: item.draft, fieldData }
+    })
   })
 }
 
@@ -125,8 +144,8 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
         result[id] = { type, value: Array.isArray(value) ? value.map((v: any) => typeof v === 'object' ? (v.url ?? v) : v) : value }
         break
       case 'enum':
-        // enum value may be an object (EnumCase) — extract the name string
-        result[id] = { type, value: typeof value === 'object' && value !== null ? (value.name ?? value.id ?? null) : value }
+        // enum value may be an object (EnumCase) — extract the case ID (canvas requires ID, not name)
+        result[id] = { type, value: typeof value === 'object' && value !== null ? (value.id ?? value.name ?? null) : value }
         break
       default:
         result[id] = entry
