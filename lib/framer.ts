@@ -135,21 +135,6 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
-// Strip {type, value} wrappers to raw values for Collection.addItems (addCollectionItems2).
-// That endpoint treats fieldData[id] as the raw field value, not a typed entry.
-function stripFieldDataWrappers(fieldData: Record<string, any>): Record<string, any> {
-  const result: Record<string, any> = {}
-  for (const [id, entry] of Object.entries(fieldData)) {
-    if (!entry) { result[id] = entry; continue }
-    if (typeof entry === 'object' && 'type' in entry && 'value' in entry) {
-      result[id] = entry.value
-    } else {
-      result[id] = entry
-    }
-  }
-  return result
-}
-
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,
@@ -157,24 +142,28 @@ export async function updateItemAndPublish(
   item: FramerItem
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
-    // Try ManagedCollection first (plugin-managed CMS collections).
-    // Fall back to regular Collection (manually-managed CMS collections).
-    const managedCols = await framer.getManagedCollections()
-    let col: any = managedCols.find((c: any) => c.id === collectionId)
-    let useRawValues = false
+    const fieldData = normalizeFieldData(item.fieldData)
 
-    if (!col) {
+    // Try ManagedCollection first (plugin-managed CMS collections).
+    const managedCols = await framer.getManagedCollections()
+    const managedCol = managedCols.find((c: any) => c.id === collectionId)
+    if (managedCol) {
+      await managedCol.addItems([{ ...item, fieldData } as any])
+    } else {
+      // Regular (manually-managed) collection.
+      // Use CollectionItem.setAttributes (setCollectionItemAttributes2) rather than
+      // Collection.addItems (addCollectionItems2) — the latter mishandles enum typed entries.
       const cols = await framer.getCollections()
-      col = cols.find((c: any) => c.id === collectionId)
-      // Collection.addItems (addCollectionItems2) expects raw values, not {type,value} wrappers
-      useRawValues = true
+      const col = cols.find((c: any) => c.id === collectionId)
+      if (!col) throw new Error(`Collection ${collectionId} not found`)
+
+      const collectionItems = await col.getItems()
+      const collectionItem = collectionItems.find((ci: any) => ci.id === item.id)
+      if (!collectionItem) throw new Error(`Item ${item.id} not found in collection ${collectionId}`)
+
+      await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
     }
 
-    if (!col) throw new Error(`Collection ${collectionId} not found`)
-
-    const normalized = normalizeFieldData(item.fieldData)
-    const fieldData = useRawValues ? stripFieldDataWrappers(normalized) : normalized
-    await col.addItems([{ ...item, fieldData } as any])
     const published = await framer.publish()
     await framer.deploy(published.deployment.id)
   })
