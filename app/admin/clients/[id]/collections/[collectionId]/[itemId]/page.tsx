@@ -44,6 +44,7 @@ export default async function AdminEditItemPage({
         item={plainItem}
         fields={plainFields}
         saveUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/items/${itemId}`}
+        deleteUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/items/${itemId}`}
         backUrl={`/admin/clients/${clientId}/collections/${collectionId}`}
       />
     </div>

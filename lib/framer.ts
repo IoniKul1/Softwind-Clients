@@ -244,6 +244,29 @@ export async function createItemAndPublish(
   })
 }
 
+export async function deleteItemAndPublish(
+  projectUrl: string,
+  apiKey: string,
+  collectionId: string,
+  itemId: string
+): Promise<void> {
+  await withFramer(projectUrl, apiKey, async (framer) => {
+    const managedCols = await framer.getManagedCollections()
+    const managedCol = managedCols.find((c: any) => c.id === collectionId)
+    if (managedCol) {
+      await managedCol.removeItems([itemId])
+    } else {
+      const cols = await framer.getCollections()
+      const col = cols.find((c: any) => c.id === collectionId)
+      if (!col) throw new Error(`Collection ${collectionId} not found`)
+      await (col as any).removeItems([itemId])
+    }
+
+    const published = await framer.publish()
+    await framer.deploy(published.deployment.id)
+  })
+}
+
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,

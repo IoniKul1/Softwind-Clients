@@ -42,6 +42,7 @@ export default async function EditItemPage({
         collectionId={collectionId}
         item={plainItem}
         fields={plainFields}
+        backUrl={`/collections/${collectionId}`}
       />
     </div>
   )
