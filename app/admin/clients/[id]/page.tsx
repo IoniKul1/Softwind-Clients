@@ -7,17 +7,13 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   const { id } = await params
   const adminClient = createAdminClient()
 
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('*, projects(id, name, framer_project_url)')
-    .eq('id', id)
-    .single()
+  const [{ data: profile }, { data: project }, { data: { user } }] = await Promise.all([
+    adminClient.from('profiles').select('id, name').eq('id', id).single(),
+    adminClient.from('projects').select('id, name, framer_project_url').eq('client_user_id', id).single(),
+    adminClient.auth.admin.getUserById(id),
+  ])
 
   if (!profile) notFound()
-
-  const { data: { user } } = await adminClient.auth.admin.getUserById(id)
-
-  const project = (profile as any).projects?.[0] ?? null
 
   return (
     <div className="flex flex-col gap-8">

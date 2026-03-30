@@ -4,15 +4,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
 export default async function AdminPage() {
   const adminClient = createAdminClient()
 
-  // Get all client profiles (bypass RLS with admin client)
-  const { data: profiles } = await adminClient
-    .from('profiles')
-    .select('*, projects(name)')
-    .eq('role', 'client')
-    .order('created_at', { ascending: false })
+  const [
+    { data: profiles },
+    { data: projects },
+    { data: { users } },
+  ] = await Promise.all([
+    adminClient.from('profiles').select('id, name, created_at').eq('role', 'client').order('created_at', { ascending: false }),
+    adminClient.from('projects').select('client_user_id, name'),
+    adminClient.auth.admin.listUsers(),
+  ])
 
-  // Get auth users to show emails
-  const { data: { users } } = await adminClient.auth.admin.listUsers()
+  const projectByClient = Object.fromEntries((projects ?? []).map(p => [p.client_user_id, p.name]))
   const emailMap = Object.fromEntries(users.map(u => [u.id, u.email]))
 
   return (
@@ -32,7 +34,7 @@ export default async function AdminPage() {
               <p className="text-neutral-500 text-xs mt-0.5">{emailMap[p.id] ?? '—'}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-neutral-400">{(p as any).projects?.[0]?.name ?? 'Sin proyecto'}</p>
+              <p className="text-xs text-neutral-400">{projectByClient[p.id] ?? 'Sin proyecto'}</p>
             </div>
           </Link>
         ))}
