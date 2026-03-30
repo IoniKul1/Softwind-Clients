@@ -17,11 +17,12 @@ export default function LoginPage() {
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,
       },
     })
     setLoading(false)
     if (error) {
-      setError('No pudimos enviar el link. Verificá el email ingresado.')
+      setError('No encontramos una cuenta con ese email. Contactá a tu administrador.')
     } else {
       setSent(true)
     }

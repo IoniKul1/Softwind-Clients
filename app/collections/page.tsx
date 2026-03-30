@@ -14,7 +14,12 @@ export default async function CollectionsPage() {
     .single()
 
   if (!project) {
-    return <p className="text-neutral-500 text-sm">No tenés ningún proyecto configurado todavía.</p>
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-neutral-400 text-sm">Tu cuenta todavía no tiene un proyecto asignado.</p>
+        <p className="text-neutral-600 text-xs">Contactá a tu administrador para que configure tu proyecto.</p>
+      </div>
+    )
   }
 
   let collections: Awaited<ReturnType<typeof getCollections>> = []

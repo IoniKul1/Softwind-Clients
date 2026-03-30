@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function CollectionsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -15,6 +16,7 @@ export default async function CollectionsLayout({ children }: { children: React.
           <h1 className="text-lg font-semibold">Hola, {profile?.name ?? 'Cliente'}</h1>
           <p className="text-neutral-500 text-sm mt-1">Tu contenido</p>
         </div>
+        <LogoutButton />
       </div>
       {children}
     </div>
