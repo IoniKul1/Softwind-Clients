@@ -71,6 +71,19 @@ function toPlain(v: any): any {
   return result
 }
 
+// Normalize enum field values from objects (EnumCase instances) to strings
+function normalizeEnumValues(fieldData: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {}
+  for (const [id, entry] of Object.entries(fieldData)) {
+    if (entry?.type === 'enum' && typeof entry.value === 'object' && entry.value !== null) {
+      result[id] = { ...entry, value: entry.value.name ?? entry.value.id ?? null }
+    } else {
+      result[id] = entry
+    }
+  }
+  return result
+}
+
 export async function getItems(
   projectUrl: string,
   apiKey: string,
@@ -85,7 +98,7 @@ export async function getItems(
       id: item.id,
       slug: item.slug,
       draft: item.draft,
-      fieldData: toPlain(item.fieldData ?? {}),
+      fieldData: normalizeEnumValues(toPlain(item.fieldData ?? {})),
     }))
   })
 }
@@ -105,6 +118,10 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
       case 'array':
         // gallery: array of {url} objects → array of URL strings
         result[id] = { type, value: Array.isArray(value) ? value.map((v: any) => typeof v === 'object' ? (v.url ?? v) : v) : value }
+        break
+      case 'enum':
+        // enum value may be an object (EnumCase) — extract the name string
+        result[id] = { type, value: typeof value === 'object' && value !== null ? (value.name ?? value.id ?? null) : value }
         break
       default:
         result[id] = entry
