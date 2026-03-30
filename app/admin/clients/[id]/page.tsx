@@ -21,6 +21,12 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="flex flex-col gap-8">
+      <Link
+        href="/admin"
+        className="text-xs text-neutral-500 hover:text-white -mb-4 inline-block"
+      >
+        ← Volver a clientes
+      </Link>
       {project && (
         <Link
           href={`/admin/clients/${id}/collections`}
