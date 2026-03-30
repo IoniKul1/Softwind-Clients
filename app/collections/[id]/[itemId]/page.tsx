@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
-import { getCollectionFields, getItems } from '@/lib/framer'
+import { getCollectionData } from '@/lib/framer'
 import { notFound } from 'next/navigation'
 import ItemEditClient from './ItemEditClient'
 import Link from 'next/link'
@@ -23,10 +23,7 @@ export default async function EditItemPage({
   if (!project) notFound()
 
   const apiKey = decrypt(project.framer_api_key_encrypted)
-  const [fields, items] = await Promise.all([
-    getCollectionFields(project.framer_project_url, apiKey, collectionId),
-    getItems(project.framer_project_url, apiKey, collectionId),
-  ])
+  const { fields, items } = await getCollectionData(project.framer_project_url, apiKey, collectionId)
 
   const item = items.find((i) => i.id === itemId)
   if (!item) notFound()

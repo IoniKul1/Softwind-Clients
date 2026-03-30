@@ -75,6 +75,100 @@ function toPlain(v: any): any {
   return result
 }
 
+// Build name→id map for enum cases from raw field list.
+function buildEnumNameToId(fields: any[]): Record<string, Record<string, string>> {
+  const enumNameToId: Record<string, Record<string, string>> = {}
+  for (const f of fields) {
+    if (f.type !== 'enum' || !Array.isArray(f.cases)) continue
+    const map: Record<string, string> = {}
+    for (const c of f.cases) {
+      const plain = toPlain(c)
+      const id = (typeof plain.id === 'string' && plain.id) ? plain.id : String(c)
+      const name = (typeof plain.name === 'string' && plain.name) ? plain.name : id
+      map[name] = id
+    }
+    enumNameToId[f.id] = map
+  }
+  return enumNameToId
+}
+
+// Map raw items to FramerItem[], converting enum names to IDs.
+function mapItems(items: any[], enumNameToId: Record<string, Record<string, string>>): FramerItem[] {
+  return items.map((item: any) => {
+    const raw = toPlain(item.fieldData ?? {})
+    const fieldData: Record<string, any> = {}
+    for (const [fid, entry] of Object.entries(raw) as [string, any][]) {
+      if (entry?.type === 'enum') {
+        let val = entry.value
+        if (val && typeof val === 'object') {
+          const plain = toPlain(val)
+          val = plain.id ?? plain.name ?? null
+        }
+        if (typeof val === 'string' && enumNameToId[fid]?.[val]) {
+          val = enumNameToId[fid][val]
+        }
+        fieldData[fid] = { ...entry, value: val }
+      } else {
+        fieldData[fid] = entry
+      }
+    }
+    return { id: item.id, slug: item.slug, draft: item.draft, fieldData }
+  })
+}
+
+// Fetch only slugs/draft status — no field definitions needed for list views.
+export async function getItemsMeta(
+  projectUrl: string,
+  apiKey: string,
+  collectionId: string
+): Promise<Pick<FramerItem, 'id' | 'slug' | 'draft'>[]> {
+  return withFramer(projectUrl, apiKey, async (framer) => {
+    const cols = await framer.getCollections()
+    const col = cols.find((c: any) => c.id === collectionId)
+    if (!col) throw new Error(`Collection ${collectionId} not found`)
+    const items = await col.getItems()
+    return items.map((item: any) => ({ id: item.id, slug: item.slug, draft: item.draft }))
+  })
+}
+
+// Fetch fields and items in a single connection — use this on edit/create pages
+// that need both, instead of calling getCollectionFields + getItems separately.
+export async function getCollectionData(
+  projectUrl: string,
+  apiKey: string,
+  collectionId: string
+): Promise<{ fields: FramerField[]; items: FramerItem[] }> {
+  return withFramer(projectUrl, apiKey, async (framer) => {
+    const cols = await framer.getCollections()
+    const col = cols.find((c: any) => c.id === collectionId)
+    if (!col) throw new Error(`Collection ${collectionId} not found`)
+
+    const rawFields = await col.getFields()
+    const enumNameToId = buildEnumNameToId(rawFields)
+
+    const fields: FramerField[] = (rawFields as any[]).map((f: any) => {
+      const rawCases = f.cases
+      const cases: FramerEnumCase[] = Array.isArray(rawCases)
+        ? rawCases.map((c: any) => {
+            if (typeof c === 'string') return { id: c, name: c }
+            const plain = toPlain(c)
+            const id = (typeof plain.id === 'string' && plain.id) ? plain.id
+              : (() => { try { const i = c.id; if (typeof i === 'string' && i) return i } catch {} return String(c) })()
+            const name = (typeof plain.name === 'string' && plain.name) ? plain.name
+              : (() => { try { const n = c.name; if (typeof n === 'string' && n) return n } catch {} return id })()
+            return { id, name }
+          })
+        : []
+      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
+    })
+
+    const rawItems = await col.getItems()
+    const items = mapItems(rawItems, enumNameToId)
+
+    return { fields, items }
+  })
+}
+
 export async function getItems(
   projectUrl: string,
   apiKey: string,
@@ -84,46 +178,10 @@ export async function getItems(
     const cols = await framer.getCollections()
     const col = cols.find((c: any) => c.id === collectionId)
     if (!col) throw new Error(`Collection ${collectionId} not found`)
-
-    // Build name→id maps for enum fields.
-    // Framer stores enum values as case *names* in fieldData, but the canvas
-    // API requires case *IDs* when writing. Convert at read time so the whole
-    // system works with IDs consistently.
-    const fields = await col.getFields()
-    const enumNameToId: Record<string, Record<string, string>> = {}
-    for (const f of fields as any[]) {
-      if (f.type !== 'enum' || !Array.isArray(f.cases)) continue
-      const map: Record<string, string> = {}
-      for (const c of f.cases) {
-        const plain = toPlain(c)
-        const id = (typeof plain.id === 'string' && plain.id) ? plain.id : String(c)
-        const name = (typeof plain.name === 'string' && plain.name) ? plain.name : id
-        map[name] = id
-      }
-      enumNameToId[f.id] = map
-    }
-
+    const rawFields = await col.getFields()
+    const enumNameToId = buildEnumNameToId(rawFields)
     const items = await col.getItems()
-    return items.map((item: any) => {
-      const raw = toPlain(item.fieldData ?? {})
-      const fieldData: Record<string, any> = {}
-      for (const [fid, entry] of Object.entries(raw) as [string, any][]) {
-        if (entry?.type === 'enum') {
-          let val = entry.value
-          if (val && typeof val === 'object') {
-            const plain = toPlain(val)
-            val = plain.id ?? plain.name ?? null
-          }
-          if (typeof val === 'string' && enumNameToId[fid]?.[val]) {
-            val = enumNameToId[fid][val]
-          }
-          fieldData[fid] = { ...entry, value: val }
-        } else {
-          fieldData[fid] = entry
-        }
-      }
-      return { id: item.id, slug: item.slug, draft: item.draft, fieldData }
-    })
+    return mapItems(items, enumNameToId)
   })
 }
 

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { decrypt } from '@/lib/crypto'
-import { getItems } from '@/lib/framer'
+import { getItemsMeta } from '@/lib/framer'
 import { notFound } from 'next/navigation'
 
 export default async function AdminItemsPage({
@@ -21,7 +21,7 @@ export default async function AdminItemsPage({
   if (!project) notFound()
 
   const apiKey = decrypt(project.framer_api_key_encrypted)
-  const items = await getItems(project.framer_project_url, apiKey, collectionId)
+  const items = await getItemsMeta(project.framer_project_url, apiKey, collectionId)
 
   return (
     <div>

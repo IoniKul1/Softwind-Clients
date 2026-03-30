@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
-import { getItems } from '@/lib/framer'
+import { getItemsMeta } from '@/lib/framer'
 
 export default async function ItemsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: collectionId } = await params
@@ -17,7 +17,7 @@ export default async function ItemsPage({ params }: { params: Promise<{ id: stri
   if (!project) return <p className="text-neutral-500 text-sm">Sin proyecto.</p>
 
   const apiKey = decrypt(project.framer_api_key_encrypted)
-  const items = await getItems(project.framer_project_url, apiKey, collectionId)
+  const items = await getItemsMeta(project.framer_project_url, apiKey, collectionId)
 
   return (
     <div>
