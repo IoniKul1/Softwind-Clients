@@ -135,6 +135,21 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
+// Strip {type, value} wrappers to raw values for Collection.addItems (addCollectionItems2).
+// That endpoint treats fieldData[id] as the raw field value, not a typed entry.
+function stripFieldDataWrappers(fieldData: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {}
+  for (const [id, entry] of Object.entries(fieldData)) {
+    if (!entry) { result[id] = entry; continue }
+    if (typeof entry === 'object' && 'type' in entry && 'value' in entry) {
+      result[id] = entry.value
+    } else {
+      result[id] = entry
+    }
+  }
+  return result
+}
+
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,
@@ -142,14 +157,24 @@ export async function updateItemAndPublish(
   item: FramerItem
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
-    // ManagedCollection.addItems uses addManagedCollectionItems2 which properly
-    // handles the {type, value} field data format. Collection.addItems uses
-    // addCollectionItems2 which treats the entire entry object as the raw value.
+    // Try ManagedCollection first (plugin-managed CMS collections).
+    // Fall back to regular Collection (manually-managed CMS collections).
     const managedCols = await framer.getManagedCollections()
-    const col = managedCols.find((c: any) => c.id === collectionId)
+    let col: any = managedCols.find((c: any) => c.id === collectionId)
+    let useRawValues = false
+
+    if (!col) {
+      const cols = await framer.getCollections()
+      col = cols.find((c: any) => c.id === collectionId)
+      // Collection.addItems (addCollectionItems2) expects raw values, not {type,value} wrappers
+      useRawValues = true
+    }
+
     if (!col) throw new Error(`Collection ${collectionId} not found`)
-    const normalized = { ...item, fieldData: normalizeFieldData(item.fieldData) }
-    await col.addItems([normalized as any])
+
+    const normalized = normalizeFieldData(item.fieldData)
+    const fieldData = useRawValues ? stripFieldDataWrappers(normalized) : normalized
+    await col.addItems([{ ...item, fieldData } as any])
     const published = await framer.publish()
     await framer.deploy(published.deployment.id)
   })
