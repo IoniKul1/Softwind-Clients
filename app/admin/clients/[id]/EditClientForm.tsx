@@ -70,8 +70,10 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
           <input className={inputClass} value={form.framerProjectUrl} onChange={e => set('framerProjectUrl', e.target.value)} required />
         </div>
         <div>
-          <label className={labelClass}>Nueva Framer API Key (dejar vacío para no cambiar)</label>
-          <input type="password" className={inputClass} value={form.framerApiKey} onChange={e => set('framerApiKey', e.target.value)} placeholder="fr_..." />
+          <label className={labelClass}>
+            Framer API Key {projectId ? <span className="text-neutral-600">(dejar vacío para no cambiar)</span> : <span className="text-red-400">*requerida</span>}
+          </label>
+          <input type="password" className={inputClass} value={form.framerApiKey} onChange={e => set('framerApiKey', e.target.value)} placeholder="fr_..." required={!projectId} />
         </div>
         {error && <p className="text-red-400 text-xs">{error}</p>}
         <button type="submit" disabled={loading}
