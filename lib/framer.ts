@@ -135,6 +135,22 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
+// The canvas setCollectionItemAttributes2 / addCollectionItems2 handlers treat enum
+// fieldData entries as raw case values, not {type,value} typed wrappers.  Passing a
+// typed wrapper causes String({...}) = "[object Object]" in the canvas enum validator.
+// Unwrap only enum entries to their plain string value; all other types stay wrapped.
+function unwrapEnumEntries(fieldData: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {}
+  for (const [id, entry] of Object.entries(fieldData)) {
+    if (entry?.type === 'enum') {
+      result[id] = entry.value ?? null
+    } else {
+      result[id] = entry
+    }
+  }
+  return result
+}
+
 export async function updateItemAndPublish(
   projectUrl: string,
   apiKey: string,
@@ -142,17 +158,16 @@ export async function updateItemAndPublish(
   item: FramerItem
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
-    const fieldData = normalizeFieldData(item.fieldData)
+    const normalized = normalizeFieldData(item.fieldData)
 
     // Try ManagedCollection first (plugin-managed CMS collections).
     const managedCols = await framer.getManagedCollections()
     const managedCol = managedCols.find((c: any) => c.id === collectionId)
     if (managedCol) {
-      await managedCol.addItems([{ ...item, fieldData } as any])
+      await managedCol.addItems([{ ...item, fieldData: normalized } as any])
     } else {
-      // Regular (manually-managed) collection.
-      // Use CollectionItem.setAttributes (setCollectionItemAttributes2) rather than
-      // Collection.addItems (addCollectionItems2) — the latter mishandles enum typed entries.
+      // Regular (manually-managed) collection: use CollectionItem.setAttributes.
+      // The canvas handler expects enum values as raw strings, not {type,value} wrappers.
       const cols = await framer.getCollections()
       const col = cols.find((c: any) => c.id === collectionId)
       if (!col) throw new Error(`Collection ${collectionId} not found`)
@@ -161,6 +176,7 @@ export async function updateItemAndPublish(
       const collectionItem = collectionItems.find((ci: any) => ci.id === item.id)
       if (!collectionItem) throw new Error(`Item ${item.id} not found in collection ${collectionId}`)
 
+      const fieldData = unwrapEnumEntries(normalized)
       await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
     }
 
