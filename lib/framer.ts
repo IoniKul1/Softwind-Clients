@@ -201,6 +201,10 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
         // gallery: array of {url} objects → array of URL strings
         result[id] = { type, value: Array.isArray(value) ? value.map((v: any) => typeof v === 'object' ? (v.url ?? v) : v) : value }
         break
+      case 'link':
+        // canvas expects a URL string, not a {url, label} object
+        result[id] = { type, value: typeof value === 'object' && value !== null ? (value.url ?? null) : value }
+        break
       case 'enum':
         // enum value may be an object (EnumCase) — extract the case ID (canvas requires ID, not name)
         result[id] = { type, value: typeof value === 'object' && value !== null ? (value.id ?? value.name ?? null) : value }
