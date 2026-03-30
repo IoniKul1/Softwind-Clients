@@ -221,15 +221,22 @@ export async function createItemAndPublish(
   await withFramer(projectUrl, apiKey, async (framer) => {
     const fieldData = normalizeFieldData(item.fieldData)
 
+    // Strip null/undefined values — canvas throws "Failed to construct URL"
+    // when it receives null for image/file/date/number fields on create.
+    const cleanFieldData: Record<string, any> = {}
+    for (const [id, entry] of Object.entries(fieldData)) {
+      if (entry != null && entry.value != null) cleanFieldData[id] = entry
+    }
+
     const managedCols = await framer.getManagedCollections()
     const managedCol = managedCols.find((c: any) => c.id === collectionId)
     if (managedCol) {
-      await managedCol.addItems([{ ...item, fieldData } as any])
+      await managedCol.addItems([{ slug: item.slug, draft: item.draft ?? false, fieldData: cleanFieldData } as any])
     } else {
       const cols = await framer.getCollections()
       const col = cols.find((c: any) => c.id === collectionId)
       if (!col) throw new Error(`Collection ${collectionId} not found`)
-      await (col as any).addItems([{ ...item, fieldData }])
+      await (col as any).addItems([{ slug: item.slug, draft: item.draft ?? false, fieldData: cleanFieldData }])
     }
 
     const published = await framer.publish()
