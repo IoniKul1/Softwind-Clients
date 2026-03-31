@@ -44,13 +44,10 @@ export default function LoginPage() {
         {/* Center content */}
         <div>
           <p
-            className="text-4xl leading-tight text-white mb-4"
+            className="text-5xl leading-tight text-white"
             style={{ fontFamily: 'Cal Sans, sans-serif' }}
           >
             Tu sitio web,<br />siempre actualizado.
-          </p>
-          <p className="text-neutral-500 text-sm leading-relaxed max-w-xs">
-            Gestioná el contenido de tu sitio Framer sin tocar código. Simple, rápido y seguro.
           </p>
         </div>
 
