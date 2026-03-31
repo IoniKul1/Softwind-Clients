@@ -3,15 +3,21 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { FramerField, FramerItem } from '@/lib/types'
 
-function getImageUrl(item: FramerItem, imageFieldId: string | null): string | null {
-  if (!imageFieldId) return null
-  const val = item.fieldData[imageFieldId]
-  if (!val) return null
-  if (typeof val.value === 'string' && val.value) return val.value
-  if (Array.isArray(val.value) && val.value.length > 0) {
-    const first = val.value[0]
-    if (typeof first === 'string') return first
-    if (first && typeof first === 'object' && 'url' in first) return first.url as string
+function getImageUrl(item: FramerItem, fields: FramerField[]): string | null {
+  for (const field of fields) {
+    if (field.type !== 'image' && field.type !== 'array') continue
+    const val = item.fieldData[field.id]
+    if (!val || !val.value) continue
+    // image type: { url: string }
+    if (field.type === 'image' && typeof val.value === 'object' && !Array.isArray(val.value)) {
+      const url = (val.value as any).url
+      if (typeof url === 'string' && url) return url
+    }
+    // array type: [{ url: string }, ...]
+    if (field.type === 'array' && Array.isArray(val.value) && val.value.length > 0) {
+      const first = (val.value as any[])[0]
+      if (first && typeof first.url === 'string' && first.url) return first.url
+    }
   }
   return null
 }
@@ -42,7 +48,6 @@ export default function ItemsView({
     : `/collections/${collectionId}`
   const backHref = clientId ? `/admin/clients/${clientId}/collections` : '/collections'
 
-  const imageFieldId = fields.find(f => f.type === 'image' || f.type === 'array')?.id ?? null
   const titleFieldId = fields.find(f => f.type === 'string' && (f.name.toLowerCase().includes('title') || f.name.toLowerCase().includes('nombre') || f.name.toLowerCase().includes('name')))?.id ?? null
 
   return (
@@ -97,7 +102,7 @@ export default function ItemsView({
       {view === 'grid' && items.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {items.map((item) => {
-            const imgUrl = getImageUrl(item, imageFieldId)
+            const imgUrl = getImageUrl(item, fields)
             const title = getTitle(item, titleFieldId)
             return (
               <Link
@@ -148,7 +153,7 @@ export default function ItemsView({
       {view === 'list' && items.length > 0 && (
         <div className="flex flex-col gap-2">
           {items.map((item) => {
-            const imgUrl = getImageUrl(item, imageFieldId)
+            const imgUrl = getImageUrl(item, fields)
             const title = getTitle(item, titleFieldId)
             return (
               <Link
