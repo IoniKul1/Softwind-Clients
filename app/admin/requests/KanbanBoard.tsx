@@ -15,6 +15,13 @@ import {
 import AttachmentPreview from '@/components/AttachmentPreview'
 
 type Status = 'pending' | 'in_progress' | 'done'
+type Assignee = 'Martin' | 'Santiago' | 'Yoni' | null
+
+const TEAM: { name: string; initials: string; color: string }[] = [
+  { name: 'Martin',   initials: 'M', color: 'bg-violet-600' },
+  { name: 'Santiago', initials: 'S', color: 'bg-orange-500' },
+  { name: 'Yoni',     initials: 'Y', color: 'bg-brand' },
+]
 
 interface Request {
   id: string
@@ -22,6 +29,7 @@ interface Request {
   title: string
   description: string | null
   status: Status
+  assigned_to: Assignee
   attachments: { url: string; name: string; type: 'image' | 'file' }[]
   created_at: string
 }
@@ -48,19 +56,29 @@ const accent: Record<Status, string> = {
 }
 const cols: Status[] = ['pending', 'in_progress', 'done']
 
-function RequestCard({ r, profileMap, projectMap, isDragging = false, onClick }: {
+function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) {
+  const member = TEAM.find(t => t.name === name)
+  if (!member) return null
+  const dim = size === 'sm' ? 'w-5 h-5 text-[9px]' : 'w-7 h-7 text-xs'
+  return (
+    <span className={`${dim} ${member.color} rounded-full flex items-center justify-center text-white font-medium shrink-0`}>
+      {member.initials}
+    </span>
+  )
+}
+
+function RequestCard({ r, profileMap, projectMap, isDragging = false }: {
   r: Request
   profileMap: Record<string, string>
   projectMap: Record<string, string>
   isDragging?: boolean
-  onClick?: () => void
 }) {
   return (
-    <div
-      className={`border border-neutral-800 rounded-xl px-4 py-3.5 bg-neutral-950 select-none ${isDragging ? 'opacity-40' : 'hover:border-neutral-700 transition-colors'}`}
-      onClick={onClick}
-    >
-      <p className="font-medium text-sm mb-0.5 leading-snug">{r.title}</p>
+    <div className={`border border-neutral-800 rounded-xl px-4 py-3.5 bg-neutral-950 select-none ${isDragging ? 'opacity-40' : 'hover:border-neutral-700 transition-colors'}`}>
+      <div className="flex items-start justify-between gap-2 mb-0.5">
+        <p className="font-medium text-sm leading-snug">{r.title}</p>
+        {r.assigned_to && <Avatar name={r.assigned_to} />}
+      </div>
       <p className="text-[11px] text-neutral-600">
         {projectMap[r.client_user_id] ?? profileMap[r.client_user_id] ?? '—'}
         {profileMap[r.client_user_id] && projectMap[r.client_user_id] && (
@@ -84,7 +102,6 @@ function DraggableCard({ r, profileMap, projectMap, onOpen }: {
   onOpen: (r: Request) => void
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: r.id })
-
   return (
     <div
       ref={setNodeRef}
@@ -128,29 +145,41 @@ function Column({ status, requests, profileMap, projectMap, onOpen }: {
   )
 }
 
-function DetailPanel({ r, profileMap, projectMap, onClose }: {
+function DetailPanel({ r, profileMap, projectMap, onClose, onUpdate }: {
   r: Request
   profileMap: Record<string, string>
   projectMap: Record<string, string>
   onClose: () => void
+  onUpdate: (id: string, patch: Partial<Request>) => void
 }) {
+  const [savingAssignee, setSavingAssignee] = useState(false)
+
+  async function handleAssign(name: string | null) {
+    const assigned_to = name as Assignee
+    setSavingAssignee(true)
+    onUpdate(r.id, { assigned_to })
+    await fetch(`/api/admin/requests/${r.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_to }),
+    })
+    setSavingAssignee(false)
+  }
+
   return (
     <>
-      {/* Backdrop */}
       <div className="fixed inset-0 z-40" onClick={onClose} />
-
-      {/* Panel */}
       <div className="fixed right-0 top-0 h-full w-[420px] z-50 bg-neutral-950 border-l border-neutral-800 flex flex-col shadow-2xl animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-800">
           <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusColor[r.status]}`}>
             {statusLabel[r.status]}
           </span>
-          <button onClick={onClose} className="text-neutral-500 hover:text-white transition text-lg leading-none">×</button>
+          <button onClick={onClose} className="text-neutral-500 hover:text-white transition text-xl leading-none">×</button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+        <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6">
           <div>
             <h2 className="text-lg font-semibold leading-snug mb-1">{r.title}</h2>
             <p className="text-xs text-neutral-600">
@@ -159,6 +188,31 @@ function DetailPanel({ r, profileMap, projectMap, onClose }: {
                 <span className="text-neutral-700"> · {profileMap[r.client_user_id]}</span>
               )}
             </p>
+          </div>
+
+          {/* Assignee */}
+          <div>
+            <p className="text-xs text-neutral-500 mb-3">Asignado a</p>
+            <div className="flex items-center gap-2">
+              {TEAM.map(member => {
+                const isSelected = r.assigned_to === member.name
+                return (
+                  <button
+                    key={member.name}
+                    onClick={() => handleAssign(isSelected ? null : member.name)}
+                    disabled={savingAssignee}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition ${
+                      isSelected
+                        ? 'border-white/20 bg-white/10 text-white'
+                        : 'border-neutral-800 text-neutral-500 hover:border-neutral-600 hover:text-neutral-300'
+                    }`}
+                  >
+                    <Avatar name={member.name} size="sm" />
+                    {member.name}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {r.description && (
@@ -216,14 +270,19 @@ export default function KanbanBoard({
 }) {
   const [requests, setRequests] = useState(initialRequests)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [selected, setSelected] = useState<Request | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const activeRequest = requests.find(r => r.id === activeId) ?? null
+  const selected = requests.find(r => r.id === selectedId) ?? null
+
+  function patchRequest(id: string, patch: Partial<Request>) {
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r))
+  }
 
   function onDragStart({ active }: DragStartEvent) {
     setActiveId(active.id as string)
-    setSelected(null)
+    setSelectedId(null)
   }
 
   function onDragEnd({ active, over }: DragEndEvent) {
@@ -233,7 +292,7 @@ export default function KanbanBoard({
     const req = requests.find(r => r.id === active.id)
     if (!req || req.status === newStatus) return
 
-    setRequests(prev => prev.map(r => r.id === active.id ? { ...r, status: newStatus } : r))
+    patchRequest(active.id as string, { status: newStatus })
     fetch(`/api/admin/requests/${active.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -254,7 +313,7 @@ export default function KanbanBoard({
               requests={byStatus(s)}
               profileMap={profileMap}
               projectMap={projectMap}
-              onOpen={setSelected}
+              onOpen={r => setSelectedId(r.id)}
             />
           ))}
         </div>
@@ -272,7 +331,8 @@ export default function KanbanBoard({
           r={selected}
           profileMap={profileMap}
           projectMap={projectMap}
-          onClose={() => setSelected(null)}
+          onClose={() => setSelectedId(null)}
+          onUpdate={patchRequest}
         />
       )}
     </>

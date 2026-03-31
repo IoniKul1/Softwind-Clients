@@ -11,15 +11,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ re
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { status } = await req.json()
-  if (!['pending', 'in_progress', 'done'].includes(status)) {
-    return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
+  const body = await req.json()
+  const update: Record<string, string> = { updated_at: new Date().toISOString() }
+
+  if (body.status !== undefined) {
+    if (!['pending', 'in_progress', 'done'].includes(body.status)) {
+      return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
+    }
+    update.status = body.status
+  }
+
+  if (body.assigned_to !== undefined) {
+    const valid = ['Martin', 'Santiago', 'Yoni', null]
+    if (!valid.includes(body.assigned_to)) {
+      return NextResponse.json({ error: 'Asignado inválido' }, { status: 400 })
+    }
+    update.assigned_to = body.assigned_to
   }
 
   const adminClient = createAdminClient()
   const { error } = await adminClient
     .from('change_requests')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(update)
     .eq('id', requestId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
