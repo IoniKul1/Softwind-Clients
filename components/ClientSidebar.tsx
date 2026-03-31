@@ -59,6 +59,7 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
       <nav className="flex flex-col gap-1 flex-1">
         {navItem('/collections', 'Content Manager')}
         {navItem('/analytics', 'Analytics', 'beta')}
+        {navItem('/requests', 'Pedidos de cambios')}
       </nav>
 
       {/* Logout */}

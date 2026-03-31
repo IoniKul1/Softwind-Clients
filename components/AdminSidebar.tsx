@@ -70,6 +70,16 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
                     Analytics
                     <span className="text-[9px] px-1 py-0.5 rounded bg-neutral-700 text-neutral-400">beta</span>
                   </Link>
+                  <Link
+                    href={`/admin/clients/${client.id}/requests`}
+                    className={`text-xs py-1.5 px-2 rounded-md transition ${
+                      pathname.includes('/requests')
+                        ? 'text-white bg-neutral-800'
+                        : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+                    }`}
+                  >
+                    Pedidos
+                  </Link>
                 </div>
               )}
             </div>
