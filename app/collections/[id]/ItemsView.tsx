@@ -26,14 +26,21 @@ function getTitle(item: FramerItem, titleFieldId: string | null): string {
 
 export default function ItemsView({
   collectionId,
+  clientId,
   items,
   fields,
 }: {
   collectionId: string
+  clientId?: string
   items: FramerItem[]
   fields: FramerField[]
 }) {
   const [view, setView] = useState<'grid' | 'list'>('grid')
+
+  const base = clientId
+    ? `/admin/clients/${clientId}/collections/${collectionId}`
+    : `/collections/${collectionId}`
+  const backHref = clientId ? `/admin/clients/${clientId}/collections` : '/collections'
 
   const imageFieldId = fields.find(f => f.type === 'image' || f.type === 'array')?.id ?? null
   const titleFieldId = fields.find(f => f.type === 'string' && (f.name.toLowerCase().includes('title') || f.name.toLowerCase().includes('nombre') || f.name.toLowerCase().includes('name')))?.id ?? null
@@ -42,7 +49,7 @@ export default function ItemsView({
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-6">
-        <Link href="/collections" className="text-xs text-neutral-500 hover:text-white transition">
+        <Link href={backHref} className="text-xs text-neutral-500 hover:text-white transition">
           ← Volver
         </Link>
         <div className="flex items-center gap-2">
@@ -74,7 +81,7 @@ export default function ItemsView({
           </div>
 
           <Link
-            href={`/collections/${collectionId}/new`}
+            href={`${base}/new`}
             className="text-xs border border-neutral-700 rounded-full px-4 py-2 hover:border-neutral-400 transition"
           >
             + Nuevo item
@@ -95,7 +102,7 @@ export default function ItemsView({
             return (
               <Link
                 key={item.id}
-                href={`/collections/${collectionId}/${item.id}`}
+                href={`${base}/${item.id}`}
                 className="group border border-neutral-800 rounded-xl overflow-hidden hover:border-neutral-600 transition bg-neutral-950"
               >
                 {/* Image */}
@@ -146,7 +153,7 @@ export default function ItemsView({
             return (
               <Link
                 key={item.id}
-                href={`/collections/${collectionId}/${item.id}`}
+                href={`${base}/${item.id}`}
                 className="flex items-center gap-3 border border-neutral-800 rounded-xl px-4 py-3 hover:border-neutral-600 transition"
               >
                 {imgUrl && (
