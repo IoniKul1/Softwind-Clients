@@ -47,7 +47,7 @@ export async function middleware(req: NextRequest) {
   if (role !== 'admin' && path.startsWith('/admin')) {
     return NextResponse.redirect(new URL('/collections', req.url))
   }
-  if (role === 'admin' && path.startsWith('/collections')) {
+  if (role === 'admin' && (path.startsWith('/collections') || path.startsWith('/analytics'))) {
     return NextResponse.redirect(new URL('/admin', req.url))
   }
 
@@ -55,5 +55,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|auth/).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.webp|api/|auth/).*)'],
 }
