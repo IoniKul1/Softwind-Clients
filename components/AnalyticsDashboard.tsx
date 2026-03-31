@@ -19,7 +19,7 @@ function fmt(n: number): string {
 export default function AnalyticsDashboard({ data }: { data: Analytics }) {
   return (
     <div className="flex flex-col gap-6 mt-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
         <h2 className="text-sm font-medium text-neutral-300">Analytics</h2>
         <span className="text-xs text-neutral-600">{data.period} · actualizado {data.updatedAt}</span>
       </div>
@@ -84,7 +84,7 @@ export default function AnalyticsDashboard({ data }: { data: Analytics }) {
       )}
 
       {/* Geography + Devices */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {data.geography?.length > 0 && (
           <div className="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-4">
             <p className="text-xs text-neutral-500 mb-3">Países</p>

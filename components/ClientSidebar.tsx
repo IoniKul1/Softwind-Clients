@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
@@ -10,6 +11,7 @@ interface Props {
 
 export default function ClientSidebar({ name, websiteUrl }: Props) {
   const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
   const domain = websiteUrl ? websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '') : null
 
   const navItem = (href: string, label: string, badge?: string) => {
@@ -17,6 +19,7 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
     return (
       <Link
         href={href}
+        onClick={() => setIsOpen(false)}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${
           active
             ? 'bg-neutral-800 text-white'
@@ -31,8 +34,25 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
     )
   }
 
-  return (
-    <aside className="w-56 shrink-0 flex flex-col border-r border-neutral-800 min-h-screen px-4 py-6">
+  const sidebar = (
+    <aside className={`
+      fixed md:static inset-y-0 left-0 z-50
+      w-64 md:w-56 shrink-0
+      flex flex-col
+      border-r border-neutral-800
+      min-h-screen px-4 py-6
+      bg-neutral-950
+      transform transition-transform duration-200
+      ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+    `}>
+      {/* Close button (mobile only) */}
+      <button
+        className="md:hidden absolute top-4 right-4 text-neutral-500 hover:text-white text-xl leading-none"
+        onClick={() => setIsOpen(false)}
+      >
+        ×
+      </button>
+
       {/* Logo */}
       <div className="mb-8 px-1 flex items-center gap-2">
         <img src="/isologo.png" alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
@@ -67,5 +87,34 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
         <LogoutButton />
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 h-14 bg-neutral-950 border-b border-neutral-800">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="text-neutral-400 hover:text-white transition p-1"
+          aria-label="Abrir menú"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+        <img src="/isologo.png" alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />
+        <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 15 }}>Softwind</span>
+      </div>
+
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {sidebar}
+    </>
   )
 }

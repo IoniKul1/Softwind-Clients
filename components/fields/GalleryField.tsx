@@ -36,7 +36,7 @@ export function GalleryField({ fieldId, label, value, onChange, uploadPrefix }: 
   return (
     <div className="flex flex-col gap-2">
       <label className="text-xs text-neutral-400">{label}</label>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {urls.map((img, i) => (
           <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-neutral-700">
             <img src={img.url} alt="" className="w-full h-full object-cover" />

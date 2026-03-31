@@ -169,7 +169,7 @@ function DetailPanel({ r, profileMap, projectMap, onClose, onUpdate }: {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-[420px] z-50 bg-neutral-950 border-l border-neutral-800 flex flex-col shadow-2xl animate-slide-in">
+      <div className="fixed right-0 top-0 h-full w-full sm:w-[420px] z-50 bg-neutral-950 border-l border-neutral-800 flex flex-col shadow-2xl animate-slide-in">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-neutral-800">
           <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusColor[r.status]}`}>
@@ -305,7 +305,7 @@ export default function KanbanBoard({
   return (
     <>
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {cols.map(s => (
             <Column
               key={s}
