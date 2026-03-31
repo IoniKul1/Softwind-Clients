@@ -1,7 +1,6 @@
 'use client'
 import { useState, FormEvent } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -37,11 +36,18 @@ export default function LoginPage() {
         style={{ background: 'linear-gradient(135deg, #17182A 0%, #0f1020 60%, #1a1f3a 100%)' }}
       >
         {/* Logo */}
-        <Image src="/logo.png" alt="Softwind" width={140} height={28} style={{ objectFit: 'contain', objectPosition: 'left' }} />
+        <img
+          src="/logo.png"
+          alt="Softwind"
+          style={{ height: 28, width: 'auto', objectFit: 'contain' }}
+        />
 
         {/* Center content */}
         <div>
-          <p className="text-4xl font-semibold leading-tight text-white mb-4">
+          <p
+            className="text-4xl leading-tight text-white mb-4"
+            style={{ fontFamily: 'Cal Sans, sans-serif' }}
+          >
             Tu sitio web,<br />siempre actualizado.
           </p>
           <p className="text-neutral-500 text-sm leading-relaxed max-w-xs">
@@ -60,9 +66,8 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 bg-brand-black">
         {sent ? (
           <div className="flex flex-col gap-4 w-full max-w-sm text-center">
-            {/* Mobile logo */}
             <div className="lg:hidden flex justify-center mb-4">
-              <Image src="/isologo.png" alt="Softwind" width={40} height={40} className="rounded-full" />
+              <img src="/isologo.png" alt="Softwind" style={{ width: 40, height: 40, borderRadius: '50%' }} />
             </div>
             <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto">
               <span className="text-green-400 text-lg">✓</span>
@@ -85,11 +90,16 @@ export default function LoginPage() {
           <div className="w-full max-w-sm">
             {/* Mobile logo */}
             <div className="lg:hidden flex justify-center mb-8">
-              <Image src="/logo.png" alt="Softwind" width={120} height={24} style={{ objectFit: 'contain' }} />
+              <img src="/logo.png" alt="Softwind" style={{ height: 24, width: 'auto' }} />
             </div>
 
             <div className="mb-8">
-              <h1 className="text-xl font-semibold text-white mb-1.5">Bienvenido</h1>
+              <h1
+                className="text-2xl text-white mb-1.5"
+                style={{ fontFamily: 'Cal Sans, sans-serif' }}
+              >
+                Bienvenido
+              </h1>
               <p className="text-neutral-500 text-sm">Ingresá tu email para recibir tu link de acceso.</p>
             </div>
 

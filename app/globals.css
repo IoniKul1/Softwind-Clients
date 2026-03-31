@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "@fontsource/cal-sans";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
 
 @theme {
   --color-brand: #3B5BF6;
@@ -6,4 +10,10 @@
   --color-brand-navy: #17182A;
   --color-brand-light: #EDEDF5;
   --color-brand-black: #0A0A0A;
+  --font-sans: 'Poppins', sans-serif;
+  --font-display: 'Cal Sans', sans-serif;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
 }
