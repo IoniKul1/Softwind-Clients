@@ -6,13 +6,14 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { title, description } = await req.json()
+  const { title, description, attachments } = await req.json()
   if (!title) return NextResponse.json({ error: 'Título requerido' }, { status: 400 })
 
   const { error } = await supabase.from('change_requests').insert({
     client_user_id: user.id,
     title,
     description: description || null,
+    attachments: attachments ?? [],
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

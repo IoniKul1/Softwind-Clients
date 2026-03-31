@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import RequestStatusButton from './RequestStatusButton'
+import AttachmentPreview from '@/components/AttachmentPreview'
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -28,7 +29,7 @@ export default async function AdminRequestsPage({ params }: { params: Promise<{ 
 
   const { data: requests } = await adminClient
     .from('change_requests')
-    .select('id, title, description, status, created_at')
+    .select('id, title, description, status, attachments, created_at')
     .eq('client_user_id', id)
     .order('created_at', { ascending: false })
 
@@ -52,8 +53,9 @@ export default async function AdminRequestsPage({ params }: { params: Promise<{ 
               </span>
             </div>
             {r.description && (
-              <p className="text-neutral-500 text-xs leading-relaxed mb-3">{r.description}</p>
+              <p className="text-neutral-500 text-xs leading-relaxed mb-2">{r.description}</p>
             )}
+            <AttachmentPreview attachments={r.attachments ?? []} />
             <div className="flex items-center justify-between">
               <p className="text-neutral-700 text-xs">
                 {new Date(r.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}

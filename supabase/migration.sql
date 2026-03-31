@@ -48,6 +48,9 @@ create policy "admin requests all"
 -- Run if table already exists:
 -- (copy the create table statement above)
 
+-- Add attachments column to existing change_requests table:
+-- alter table public.change_requests add column if not exists attachments jsonb default '[]'::jsonb;
+
 -- Enable RLS
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;

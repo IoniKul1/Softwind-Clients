@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import NewRequestForm from './NewRequestForm'
+import AttachmentPreview from '@/components/AttachmentPreview'
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -18,7 +19,7 @@ export default async function RequestsPage() {
 
   const { data: requests } = await supabase
     .from('change_requests')
-    .select('id, title, description, status, created_at')
+    .select('id, title, description, status, attachments, created_at')
     .eq('client_user_id', user!.id)
     .order('created_at', { ascending: false })
 
@@ -48,6 +49,7 @@ export default async function RequestsPage() {
             {r.description && (
               <p className="text-neutral-500 text-xs mt-1.5 leading-relaxed">{r.description}</p>
             )}
+            <AttachmentPreview attachments={r.attachments ?? []} />
             <p className="text-neutral-700 text-xs mt-2">
               {new Date(r.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
             </p>
