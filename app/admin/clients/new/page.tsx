@@ -116,7 +116,7 @@ export default function NewClientPage() {
         <button
           type="submit"
           disabled={loading}
-          className="py-3 bg-white text-black font-medium rounded-full text-sm disabled:opacity-30 hover:bg-neutral-200 transition mt-2"
+          className="py-3 bg-brand text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-brand-hover transition mt-2"
         >
           {loading ? 'Creando...' : 'Crear cliente →'}
         </button>

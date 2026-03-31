@@ -40,9 +40,9 @@ export default function LoginPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-xs">
-          <div className="mb-2">
-            <h1 className="text-xl font-semibold">Softwind</h1>
-            <p className="text-neutral-500 text-sm mt-1">Ingresá con tu cuenta</p>
+          <div className="mb-2 flex flex-col items-center gap-3">
+            <img src="/isologo.png" alt="Softwind" className="w-12 h-12 rounded-full" />
+            <p className="text-neutral-500 text-sm">Ingresá con tu cuenta</p>
           </div>
           <input
             type="email"
@@ -56,7 +56,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email}
-            className="py-3 bg-white text-black font-medium rounded-full text-sm disabled:opacity-30 hover:bg-neutral-200 transition"
+            className="py-3 bg-brand text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-brand-hover transition"
           >
             {loading ? 'Enviando...' : 'Enviar link →'}
           </button>

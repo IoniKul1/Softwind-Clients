@@ -85,7 +85,7 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
         <button
           onClick={handleSave}
           disabled={status === 'saving'}
-          className="w-full py-3 bg-white text-black font-medium rounded-full text-sm disabled:opacity-30 hover:bg-neutral-200 transition"
+          className="w-full py-3 bg-brand text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-brand-hover transition"
         >
           {status === 'saving' ? 'Publicando...' : 'Guardar y publicar →'}
         </button>

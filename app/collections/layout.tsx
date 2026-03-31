@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
@@ -12,9 +13,12 @@ export default async function CollectionsLayout({ children }: { children: React.
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
       <div className="flex items-center justify-between mb-10">
-        <div>
-          <h1 className="text-lg font-semibold">Hola, {profile?.name ?? 'Cliente'}</h1>
-          <p className="text-neutral-500 text-sm mt-1">Tu contenido</p>
+        <div className="flex items-center gap-3">
+          <Image src="/isologo.png" alt="Softwind" width={32} height={32} className="rounded-full" />
+          <div>
+            <h1 className="text-sm font-medium leading-tight">Hola, {profile?.name ?? 'Cliente'}</h1>
+            <p className="text-neutral-500 text-xs mt-0.5">Tu contenido</p>
+          </div>
         </div>
         <LogoutButton />
       </div>
