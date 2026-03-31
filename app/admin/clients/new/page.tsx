@@ -1,6 +1,7 @@
 'use client'
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function NewClientPage() {
   const router = useRouter()
@@ -83,6 +84,9 @@ export default function NewClientPage() {
 
   return (
     <div className="max-w-md">
+      <Link href="/admin" className="text-xs text-neutral-500 hover:text-white inline-block mb-6">
+        ← Volver a clientes
+      </Link>
       <h2 className="text-xl font-semibold mb-6">Nuevo cliente</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
