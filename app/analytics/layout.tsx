@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ClientSidebar from '@/components/ClientSidebar'
 
-export default async function CollectionsLayout({ children }: { children: React.ReactNode }) {
+export default async function AnalyticsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
