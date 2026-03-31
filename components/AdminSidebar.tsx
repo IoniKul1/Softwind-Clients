@@ -33,7 +33,11 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
               : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
           }`}
         >
-          <span className="text-base leading-none">📋</span>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="shrink-0">
+            <rect x="1" y="1" width="4" height="14" rx="1.5" fill="currentColor" opacity=".4"/>
+            <rect x="6" y="1" width="4" height="10" rx="1.5" fill="currentColor" opacity=".7"/>
+            <rect x="11" y="1" width="4" height="7" rx="1.5" fill="currentColor"/>
+          </svg>
           <span>Pedidos</span>
         </Link>
       </nav>
