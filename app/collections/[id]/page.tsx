@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
-import { getItemsMeta } from '@/lib/framer'
+import { getCollectionData } from '@/lib/framer'
+import ItemsView from './ItemsView'
 
 export default async function ItemsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: collectionId } = await params
@@ -17,41 +17,13 @@ export default async function ItemsPage({ params }: { params: Promise<{ id: stri
   if (!project) return <p className="text-neutral-500 text-sm">Sin proyecto.</p>
 
   const apiKey = decrypt(project.framer_api_key_encrypted)
-  const items = await getItemsMeta(project.framer_project_url, apiKey, collectionId)
+  const { fields, items } = await getCollectionData(project.framer_project_url, apiKey, collectionId)
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/collections" className="text-xs text-neutral-500 hover:text-white">
-          ← Volver
-        </Link>
-        <Link
-          href={`/collections/${collectionId}/new`}
-          className="text-xs border border-neutral-700 rounded-full px-4 py-2 hover:border-neutral-400 transition"
-        >
-          + Nuevo item
-        </Link>
-      </div>
-      <div className="flex flex-col gap-3">
-        {items.length === 0 && (
-          <p className="text-neutral-500 text-sm">No hay items en esta colección.</p>
-        )}
-        {items.map((item) => (
-          <Link
-            key={item.id}
-            href={`/collections/${collectionId}/${item.id}`}
-            className="flex items-center justify-between border border-neutral-800 rounded-xl px-5 py-4 hover:border-neutral-600 transition"
-          >
-            <div>
-              <span className="font-medium text-sm">{item.slug}</span>
-              {item.draft && (
-                <span className="ml-2 text-xs text-yellow-500 border border-yellow-700 rounded px-1">borrador</span>
-              )}
-            </div>
-            <span className="text-neutral-500 text-xs">Editar →</span>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <ItemsView
+      collectionId={collectionId}
+      items={items}
+      fields={fields}
+    />
   )
 }
