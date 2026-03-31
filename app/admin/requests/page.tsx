@@ -7,7 +7,7 @@ export default async function AdminRequestsDashboard() {
   const [{ data: requests }, { data: profiles }, { data: projects }] = await Promise.all([
     adminClient
       .from('change_requests')
-      .select('id, client_user_id, title, description, status, attachments, created_at')
+      .select('id, client_user_id, title, description, status, assigned_to, attachments, created_at')
       .order('created_at', { ascending: false }),
     adminClient.from('profiles').select('id, name'),
     adminClient.from('projects').select('client_user_id, name'),
