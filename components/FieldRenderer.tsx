@@ -18,116 +18,131 @@ interface Props {
   value: FramerFieldValue | undefined
   onChange: (fieldId: string, value: FramerFieldValue) => void
   uploadPrefix?: string
+  hasError?: boolean
 }
 
-export function FieldRenderer({ field, value, onChange, uploadPrefix }: Props) {
+export function FieldRenderer({ field, value, onChange, uploadPrefix, hasError }: Props) {
   const v = value?.value
+  const label = field.required ? `${field.name} *` : field.name
 
-  switch (field.type) {
-    case 'string':
-      return (
-        <StringField
-          fieldId={field.id}
-          label={field.name}
-          value={v as string ?? null}
-          onChange={(val) => onChange(field.id, { type: 'string', value: val })}
-        />
-      )
-    case 'number':
-      return (
-        <NumberField
-          fieldId={field.id}
-          label={field.name}
-          value={v as number ?? null}
-          onChange={(val) => onChange(field.id, { type: 'number', value: val })}
-        />
-      )
-    case 'date':
-      return (
-        <DateField
-          fieldId={field.id}
-          label={field.name}
-          value={v as string ?? null}
-          onChange={(val) => onChange(field.id, { type: 'date', value: val })}
-        />
-      )
-    case 'boolean':
-      return (
-        <BooleanField
-          fieldId={field.id}
-          label={field.name}
-          value={!!(v)}
-          onChange={(val) => onChange(field.id, { type: 'boolean', value: val })}
-        />
-      )
-    case 'color':
-      return (
-        <ColorField
-          fieldId={field.id}
-          label={field.name}
-          value={v as string ?? null}
-          onChange={(val) => onChange(field.id, { type: 'color', value: val })}
-        />
-      )
-    case 'link':
-      return (
-        <LinkField
-          fieldId={field.id}
-          label={field.name}
-          value={v as any ?? null}
-          onChange={(val) => onChange(field.id, { type: 'link', value: val })}
-        />
-      )
-    case 'enum':
-      return (
-        <EnumField
-          fieldId={field.id}
-          label={field.name}
-          value={v as string ?? null}
-          cases={field.cases ?? []}
-          onChange={(val) => onChange(field.id, { type: 'enum', value: val })}
-        />
-      )
-    case 'formattedText':
-      return (
-        <FormattedTextField
-          fieldId={field.id}
-          label={field.name}
-          value={v as string ?? null}
-          onChange={(val, ct) => onChange(field.id, { type: 'formattedText', value: val, contentType: ct })}
-        />
-      )
-    case 'image':
-      return (
-        <ImageField
-          fieldId={field.id}
-          label={field.name}
-          value={v as any ?? null}
-          onChange={(val) => onChange(field.id, { type: 'image', value: val })}
-          uploadPrefix={uploadPrefix}
-        />
-      )
-    case 'file':
-      return (
-        <FileField
-          fieldId={field.id}
-          label={field.name}
-          value={v as any ?? null}
-          onChange={(val) => onChange(field.id, { type: 'file', value: val })}
-          uploadPrefix={uploadPrefix}
-        />
-      )
-    case 'array':
-      return (
-        <GalleryField
-          fieldId={field.id}
-          label={field.name}
-          value={v as any ?? null}
-          onChange={(val) => onChange(field.id, { type: 'array', value: val })}
-          uploadPrefix={uploadPrefix}
-        />
-      )
-    default:
-      return <p className="text-xs text-neutral-500">Campo tipo "{field.type}" no soportado</p>
+  const inner = (() => {
+    switch (field.type) {
+      case 'string':
+        return (
+          <StringField
+            fieldId={field.id}
+            label={label}
+            value={v as string ?? null}
+            onChange={(val) => onChange(field.id, { type: 'string', value: val })}
+          />
+        )
+      case 'number':
+        return (
+          <NumberField
+            fieldId={field.id}
+            label={label}
+            value={v as number ?? null}
+            onChange={(val) => onChange(field.id, { type: 'number', value: val })}
+          />
+        )
+      case 'date':
+        return (
+          <DateField
+            fieldId={field.id}
+            label={label}
+            value={v as string ?? null}
+            onChange={(val) => onChange(field.id, { type: 'date', value: val })}
+          />
+        )
+      case 'boolean':
+        return (
+          <BooleanField
+            fieldId={field.id}
+            label={label}
+            value={!!(v)}
+            onChange={(val) => onChange(field.id, { type: 'boolean', value: val })}
+          />
+        )
+      case 'color':
+        return (
+          <ColorField
+            fieldId={field.id}
+            label={label}
+            value={v as string ?? null}
+            onChange={(val) => onChange(field.id, { type: 'color', value: val })}
+          />
+        )
+      case 'link':
+        return (
+          <LinkField
+            fieldId={field.id}
+            label={label}
+            value={v as any ?? null}
+            onChange={(val) => onChange(field.id, { type: 'link', value: val })}
+          />
+        )
+      case 'enum':
+        return (
+          <EnumField
+            fieldId={field.id}
+            label={label}
+            value={v as string ?? null}
+            cases={field.cases ?? []}
+            onChange={(val) => onChange(field.id, { type: 'enum', value: val })}
+          />
+        )
+      case 'formattedText':
+        return (
+          <FormattedTextField
+            fieldId={field.id}
+            label={label}
+            value={v as string ?? null}
+            onChange={(val, ct) => onChange(field.id, { type: 'formattedText', value: val, contentType: ct })}
+          />
+        )
+      case 'image':
+        return (
+          <ImageField
+            fieldId={field.id}
+            label={label}
+            value={v as any ?? null}
+            onChange={(val) => onChange(field.id, { type: 'image', value: val })}
+            uploadPrefix={uploadPrefix}
+          />
+        )
+      case 'file':
+        return (
+          <FileField
+            fieldId={field.id}
+            label={label}
+            value={v as any ?? null}
+            onChange={(val) => onChange(field.id, { type: 'file', value: val })}
+            uploadPrefix={uploadPrefix}
+          />
+        )
+      case 'array':
+        return (
+          <GalleryField
+            fieldId={field.id}
+            label={label}
+            value={v as any ?? null}
+            onChange={(val) => onChange(field.id, { type: 'array', value: val })}
+            uploadPrefix={uploadPrefix}
+          />
+        )
+      default:
+        return <p className="text-xs text-neutral-500">Campo tipo "{field.type}" no soportado</p>
+    }
+  })()
+
+  if (hasError) {
+    return (
+      <div className="rounded-xl ring-1 ring-red-500/50 p-3 -m-3">
+        {inner}
+        <p className="text-xs text-red-400 mt-1.5">Este campo es obligatorio</p>
+      </div>
+    )
   }
+
+  return inner
 }

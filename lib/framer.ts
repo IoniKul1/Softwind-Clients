@@ -48,7 +48,7 @@ export async function getCollectionFields(
             return { id, name }
           })
         : []
-      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
+      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, required: f.required ?? false, cases }
     })
   })
 }
@@ -159,7 +159,7 @@ export async function getCollectionData(
             return { id, name }
           })
         : []
-      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, cases }
+      return { id: f.id, name: f.name, type: f.type, userEditable: f.userEditable, required: f.required ?? false, cases }
     })
 
     const rawItems = await col.getItems()

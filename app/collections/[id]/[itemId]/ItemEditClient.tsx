@@ -20,12 +20,31 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
   const [draft, setDraft] = useState(item.draft ?? false)
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [errorFields, setErrorFields] = useState<Set<string>>(new Set())
 
   function handleChange(fieldId: string, value: FramerFieldValue) {
     setFieldData((prev) => ({ ...prev, [fieldId]: value }))
   }
 
+  function isEmpty(val: FramerFieldValue | undefined): boolean {
+    if (!val || val.value === null || val.value === undefined) return true
+    if (typeof val.value === 'string') return val.value.trim() === ''
+    if (Array.isArray(val.value)) return val.value.length === 0
+    return false
+  }
+
   async function handleSave() {
+    const missing = new Set(
+      fields
+        .filter(f => f.required && f.userEditable !== false && isEmpty(fieldData[f.id]))
+        .map(f => f.id)
+    )
+    if (missing.size > 0) {
+      setErrorFields(missing)
+      setErrorMsg(`Completá los campos obligatorios antes de publicar.`)
+      return
+    }
+    setErrorFields(new Set())
     setStatus('saving')
     setErrorMsg('')
     const res = await fetch(saveUrl ?? `/api/collections/${collectionId}/items/${item.id}`, {
@@ -68,6 +87,7 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
           value={fieldData[field.id]}
           onChange={handleChange}
           uploadPrefix={uploadPrefix}
+          hasError={errorFields.has(field.id)}
         />
       ))}
 

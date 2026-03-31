@@ -46,6 +46,7 @@ export interface FramerField {
   name: string
   type: FramerFieldType
   userEditable?: boolean
+  required?: boolean
   cases?: FramerEnumCase[]
 }
 
