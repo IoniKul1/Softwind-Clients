@@ -1,6 +1,7 @@
 'use client'
 import { useState, FormEvent } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -29,39 +30,103 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      {sent ? (
-        <div className="flex flex-col gap-3 w-full max-w-xs text-center">
-          <h1 className="text-xl font-semibold">Softwind</h1>
-          <p className="text-neutral-400 text-sm mt-1">
-            Te enviamos un link de acceso a <span className="text-white">{email}</span>.
-            Revisá tu bandeja de entrada.
+    <main className="min-h-screen flex">
+      {/* Left panel — brand */}
+      <div
+        className="hidden lg:flex flex-col justify-between w-1/2 px-12 py-12"
+        style={{ background: 'linear-gradient(135deg, #17182A 0%, #0f1020 60%, #1a1f3a 100%)' }}
+      >
+        {/* Logo */}
+        <Image src="/logo.png" alt="Softwind" width={140} height={28} style={{ objectFit: 'contain', objectPosition: 'left' }} />
+
+        {/* Center content */}
+        <div>
+          <p className="text-4xl font-semibold leading-tight text-white mb-4">
+            Tu sitio web,<br />siempre actualizado.
+          </p>
+          <p className="text-neutral-500 text-sm leading-relaxed max-w-xs">
+            Gestioná el contenido de tu sitio Framer sin tocar código. Simple, rápido y seguro.
           </p>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-xs">
-          <div className="mb-2 flex flex-col items-center gap-3">
-            <img src="/isologo.png" alt="Softwind" className="w-12 h-12 rounded-full" />
-            <p className="text-neutral-500 text-sm">Ingresá con tu cuenta</p>
+
+        {/* Bottom decoration */}
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+          <span className="text-xs text-neutral-600">Website Content Manager</span>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 bg-brand-black">
+        {sent ? (
+          <div className="flex flex-col gap-4 w-full max-w-sm text-center">
+            {/* Mobile logo */}
+            <div className="lg:hidden flex justify-center mb-4">
+              <Image src="/isologo.png" alt="Softwind" width={40} height={40} className="rounded-full" />
+            </div>
+            <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto">
+              <span className="text-green-400 text-lg">✓</span>
+            </div>
+            <div>
+              <p className="text-white font-medium mb-1">Revisá tu email</p>
+              <p className="text-neutral-500 text-sm">
+                Te enviamos un link de acceso a{' '}
+                <span className="text-neutral-300">{email}</span>
+              </p>
+            </div>
+            <button
+              onClick={() => { setSent(false); setEmail('') }}
+              className="text-xs text-neutral-600 hover:text-neutral-400 transition mt-2"
+            >
+              Usar otro email
+            </button>
           </div>
-          <input
-            type="email"
-            placeholder="Email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-neutral-500 transition"
-          />
-          {error && <p className="text-red-400 text-xs">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading || !email}
-            className="py-3 bg-brand text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-brand-hover transition"
-          >
-            {loading ? 'Enviando...' : 'Enviar link →'}
-          </button>
-        </form>
-      )}
+        ) : (
+          <div className="w-full max-w-sm">
+            {/* Mobile logo */}
+            <div className="lg:hidden flex justify-center mb-8">
+              <Image src="/logo.png" alt="Softwind" width={120} height={24} style={{ objectFit: 'contain' }} />
+            </div>
+
+            <div className="mb-8">
+              <h1 className="text-xl font-semibold text-white mb-1.5">Bienvenido</h1>
+              <p className="text-neutral-500 text-sm">Ingresá tu email para recibir tu link de acceso.</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-neutral-500">Email</label>
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  autoFocus
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-700 outline-none focus:border-neutral-600 transition"
+                />
+              </div>
+
+              {error && (
+                <p className="text-red-400 text-xs bg-red-400/5 border border-red-400/10 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || !email}
+                className="py-3 bg-brand text-white font-medium rounded-xl text-sm disabled:opacity-30 hover:bg-brand-hover transition mt-1"
+              >
+                {loading ? 'Enviando...' : 'Enviar link de acceso →'}
+              </button>
+            </form>
+
+            <p className="text-neutral-700 text-xs text-center mt-8">
+              ¿No tenés cuenta? Contactá a tu administrador.
+            </p>
+          </div>
+        )}
+      </div>
     </main>
   )
 }
