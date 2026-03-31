@@ -8,10 +8,11 @@ interface Props {
   defaultEmail: string
   defaultProjectName: string
   defaultFramerProjectUrl: string
+  defaultWebsiteUrl: string
   projectId: string | null
 }
 
-export default function EditClientForm({ id, defaultName, defaultEmail, defaultProjectName, defaultFramerProjectUrl, projectId }: Props) {
+export default function EditClientForm({ id, defaultName, defaultEmail, defaultProjectName, defaultFramerProjectUrl, defaultWebsiteUrl, projectId }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -20,6 +21,7 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
     email: defaultEmail,
     projectName: defaultProjectName,
     framerProjectUrl: defaultFramerProjectUrl,
+    websiteUrl: defaultWebsiteUrl,
     framerApiKey: '',
   })
 
@@ -68,6 +70,10 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
         <div>
           <label className={labelClass}>Framer Project URL</label>
           <input className={inputClass} value={form.framerProjectUrl} onChange={e => set('framerProjectUrl', e.target.value)} required />
+        </div>
+        <div>
+          <label className={labelClass}>URL del sitio web <span className="text-neutral-600">(dominio publicado)</span></label>
+          <input className={inputClass} value={form.websiteUrl} onChange={e => set('websiteUrl', e.target.value)} placeholder="https://ejemplo.com" />
         </div>
         <div>
           <label className={labelClass}>

@@ -9,7 +9,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
 
   const [{ data: profile }, { data: projectRows }, { data: { user } }] = await Promise.all([
     adminClient.from('profiles').select('id, name').eq('id', id).single(),
-    adminClient.from('projects').select('id, name, framer_project_url').eq('client_user_id', id),
+    adminClient.from('projects').select('id, name, framer_project_url, website_url').eq('client_user_id', id),
     adminClient.auth.admin.getUserById(id),
   ])
   const project = projectRows?.[0] ?? null
@@ -38,6 +38,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
         defaultEmail={user?.email ?? ''}
         defaultProjectName={project?.name ?? ''}
         defaultFramerProjectUrl={project?.framer_project_url ?? ''}
+        defaultWebsiteUrl={project?.website_url ?? ''}
         projectId={project?.id ?? null}
       />
     </div>

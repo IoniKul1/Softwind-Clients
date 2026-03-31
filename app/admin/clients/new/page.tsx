@@ -13,6 +13,7 @@ export default function NewClientPage() {
     email: '',
     projectName: '',
     framerProjectUrl: '',
+    websiteUrl: '',
     framerApiKey: '',
   })
 
@@ -105,6 +106,12 @@ export default function NewClientPage() {
           <input className={inputClass} value={form.framerProjectUrl}
             onChange={e => set('framerProjectUrl', e.target.value)}
             placeholder="https://framer.com/projects/..." required />
+        </div>
+        <div>
+          <label className={labelClass}>URL del sitio web <span className="text-neutral-600">(dominio publicado)</span></label>
+          <input className={inputClass} value={form.websiteUrl}
+            onChange={e => set('websiteUrl', e.target.value)}
+            placeholder="https://ejemplo.com" />
         </div>
         <div>
           <label className={labelClass}>Framer API Key</label>

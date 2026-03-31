@@ -13,8 +13,12 @@ create table public.projects (
   name text not null,
   framer_project_url text not null,
   framer_api_key_encrypted text not null,
+  website_url text,
   created_at timestamptz default now()
 );
+
+-- Add website_url to existing projects table (run if table already exists)
+-- alter table public.projects add column if not exists website_url text;
 
 -- Enable RLS
 alter table public.profiles enable row level security;

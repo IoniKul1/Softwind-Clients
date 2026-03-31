@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { name, email, projectName, framerProjectUrl, framerApiKey } = await req.json()
+  const { name, email, projectName, framerProjectUrl, framerApiKey, websiteUrl } = await req.json()
 
   if (!name || !email || !projectName || !framerProjectUrl || !framerApiKey) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
     name: projectName,
     framer_project_url: framerProjectUrl,
     framer_api_key_encrypted: encryptedKey,
+    ...(websiteUrl ? { website_url: websiteUrl } : {}),
   })
   if (projectError) {
     return NextResponse.json({ error: projectError.message }, { status: 500 })

@@ -12,7 +12,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { name, email, projectName, framerProjectUrl, framerApiKey, projectId } = await req.json()
+  const { name, email, projectName, framerProjectUrl, framerApiKey, websiteUrl, projectId } = await req.json()
 
   if (!name || !email || !projectName || !framerProjectUrl) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const projectUpdate: Record<string, string> = {
     name: projectName,
     framer_project_url: framerProjectUrl,
+    ...(websiteUrl !== undefined ? { website_url: websiteUrl } : {}),
   }
   if (framerApiKey) {
     try {
