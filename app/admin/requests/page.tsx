@@ -42,7 +42,8 @@ export default async function AdminRequestsDashboard() {
   const in_progress = requests?.filter(r => r.status === 'in_progress') ?? []
   const done = requests?.filter(r => r.status === 'done') ?? []
 
-  const Card = ({ r }: { r: (typeof requests)[number] }) => (
+  type Request = NonNullable<typeof requests>[number]
+  const Card = ({ r }: { r: Request }) => (
     <div className="border border-neutral-800 rounded-xl px-5 py-4">
       <div className="flex items-start justify-between gap-4 mb-1">
         <div className="min-w-0">
