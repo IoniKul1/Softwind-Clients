@@ -6,6 +6,7 @@ interface Client {
   id: string
   name: string
   email: string
+  projectName: string | null
 }
 
 export default function AdminSidebar({ clients }: { clients: Client[] }) {
@@ -36,14 +37,19 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
             <div key={client.id}>
               <Link
                 href={`/admin/clients/${client.id}`}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition w-full ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition w-full ${
                   isActive
                     ? 'bg-neutral-800 text-white'
                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
                 }`}
               >
-                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-brand' : 'bg-neutral-700'}`} />
-                <span className="truncate">{client.name}</span>
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${isActive ? 'bg-brand' : 'bg-neutral-700'}`} />
+                <span className="flex flex-col min-w-0">
+                  <span className="text-sm truncate leading-tight">{client.name}</span>
+                  {client.projectName && (
+                    <span className="text-[11px] text-neutral-600 truncate leading-tight">{client.projectName}</span>
+                  )}
+                </span>
               </Link>
 
               {/* Sub-items when client is active */}
