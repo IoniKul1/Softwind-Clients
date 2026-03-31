@@ -20,6 +20,10 @@ create table public.projects (
 -- Add website_url to existing projects table (run if table already exists)
 -- alter table public.projects add column if not exists website_url text;
 
+-- Add analytics columns (run if table already exists)
+-- alter table public.projects add column if not exists analytics_data jsonb;
+-- alter table public.projects add column if not exists analytics_updated_at timestamptz;
+
 -- Enable RLS
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;

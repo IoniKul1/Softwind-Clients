@@ -2,14 +2,15 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/crypto'
 import { getCollections } from '@/lib/framer'
+import AnalyticsDashboard from '@/components/AnalyticsDashboard'
 
 export default async function CollectionsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: project, error: projectError } = await supabase
+  const { data: project } = await supabase
     .from('projects')
-    .select('framer_project_url, framer_api_key_encrypted')
+    .select('framer_project_url, framer_api_key_encrypted, analytics_data, analytics_updated_at')
     .eq('client_user_id', user!.id)
     .single()
 
@@ -43,6 +44,10 @@ export default async function CollectionsPage() {
           <span className="text-neutral-500 text-xs">→</span>
         </Link>
       ))}
+
+      {project.analytics_data && (
+        <AnalyticsDashboard data={project.analytics_data} />
+      )}
     </div>
   )
 }
