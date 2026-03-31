@@ -34,8 +34,9 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
   return (
     <aside className="w-56 shrink-0 flex flex-col border-r border-neutral-800 min-h-screen px-4 py-6">
       {/* Logo */}
-      <div className="mb-8 px-1">
-        <img src="/logo.png" alt="Softwind" style={{ height: 22, width: 'auto' }} />
+      <div className="mb-8 px-1 flex items-center gap-2">
+        <img src="/isologo.png" alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+        <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 16 }}>Softwind</span>
       </div>
 
       {/* User */}

@@ -36,11 +36,10 @@ export default function LoginPage() {
         style={{ background: 'linear-gradient(135deg, #17182A 0%, #0f1020 60%, #1a1f3a 100%)' }}
       >
         {/* Logo */}
-        <img
-          src="/logo.png"
-          alt="Softwind"
-          style={{ height: 28, width: 'auto', objectFit: 'contain' }}
-        />
+        <div className="flex items-center gap-2.5">
+          <img src="/isologo.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+          <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 20, color: 'white' }}>Softwind</span>
+        </div>
 
         {/* Center content */}
         <div>
@@ -66,8 +65,9 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 bg-brand-black">
         {sent ? (
           <div className="flex flex-col gap-4 w-full max-w-sm text-center">
-            <div className="lg:hidden flex justify-center mb-4">
-              <img src="/isologo.png" alt="Softwind" style={{ width: 40, height: 40, borderRadius: '50%' }} />
+            <div className="lg:hidden flex justify-center items-center gap-2 mb-4">
+              <img src="/isologo.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+              <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 18 }}>Softwind</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto">
               <span className="text-green-400 text-lg">✓</span>
@@ -89,8 +89,9 @@ export default function LoginPage() {
         ) : (
           <div className="w-full max-w-sm">
             {/* Mobile logo */}
-            <div className="lg:hidden flex justify-center mb-8">
-              <img src="/logo.png" alt="Softwind" style={{ height: 24, width: 'auto' }} />
+            <div className="lg:hidden flex justify-center items-center gap-2 mb-8">
+              <img src="/isologo.png" alt="" style={{ width: 24, height: 24, borderRadius: '50%' }} />
+              <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 18 }}>Softwind</span>
             </div>
 
             <div className="mb-8">
