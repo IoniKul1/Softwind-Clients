@@ -28,9 +28,7 @@ create policy "own profile read"
 -- profiles: admins can read all (for admin panel)
 create policy "admin profiles read"
   on public.profiles for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 -- projects: client can read own
 create policy "own project read"
@@ -40,6 +38,4 @@ create policy "own project read"
 -- projects: admins can do everything
 create policy "admin projects all"
   on public.projects for all
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');

@@ -18,7 +18,6 @@ export default async function CollectionsPage() {
       <div className="flex flex-col gap-2">
         <p className="text-neutral-400 text-sm">Tu cuenta todavía no tiene un proyecto asignado.</p>
         <p className="text-neutral-600 text-xs">Contactá a tu administrador para que configure tu proyecto.</p>
-        <p className="text-neutral-700 text-xs font-mono mt-2">uid: {user!.id} | error: {projectError?.message ?? projectError?.code ?? 'null'}</p>
       </div>
     )
   }
