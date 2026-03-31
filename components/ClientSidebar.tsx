@@ -1,5 +1,4 @@
 'use client'
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
@@ -35,9 +34,8 @@ export default function ClientSidebar({ name, websiteUrl }: Props) {
   return (
     <aside className="w-56 shrink-0 flex flex-col border-r border-neutral-800 min-h-screen px-4 py-6">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-8 px-1">
-        <Image src="/isologo.png" alt="Softwind" width={28} height={28} className="rounded-full" />
-        <span className="text-sm font-medium">Softwind</span>
+      <div className="mb-8 px-1">
+        <img src="/logo.png" alt="Softwind" style={{ height: 22, width: 'auto' }} />
       </div>
 
       {/* User */}
