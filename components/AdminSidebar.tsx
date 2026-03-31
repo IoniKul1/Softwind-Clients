@@ -45,9 +45,9 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
               >
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 mt-0.5 ${isActive ? 'bg-brand' : 'bg-neutral-700'}`} />
                 <span className="flex flex-col min-w-0">
-                  <span className="text-sm truncate leading-tight">{client.name}</span>
+                  <span className="text-sm truncate leading-tight">{client.projectName ?? client.name}</span>
                   {client.projectName && (
-                    <span className="text-[11px] text-neutral-600 truncate leading-tight">{client.projectName}</span>
+                    <span className="text-[11px] text-neutral-600 truncate leading-tight">{client.name}</span>
                   )}
                 </span>
               </Link>
