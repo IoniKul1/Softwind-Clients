@@ -23,6 +23,23 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
         <span style={{ fontFamily: 'Cal Sans, sans-serif', fontSize: 16 }}>Softwind</span>
       </div>
 
+      {/* Global nav */}
+      <nav className="flex flex-col gap-0.5 mb-4">
+        <Link
+          href="/admin/requests"
+          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition ${
+            pathname === '/admin/requests'
+              ? 'bg-neutral-800 text-white'
+              : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
+          }`}
+        >
+          <span className="text-base leading-none">📋</span>
+          <span>Pedidos</span>
+        </Link>
+      </nav>
+
+      <div className="border-t border-neutral-800 mb-4" />
+
       {/* Label */}
       <p className="text-[10px] uppercase tracking-widest text-neutral-600 px-1 mb-2">Clientes</p>
 
