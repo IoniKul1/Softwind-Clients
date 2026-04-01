@@ -22,7 +22,14 @@ export default function LoginPage() {
     })
     setLoading(false)
     if (error) {
-      setError('No encontramos una cuenta con ese email. Contactá a tu administrador.')
+      const msg = error.message?.toLowerCase() ?? ''
+      if (msg.includes('rate') || msg.includes('limit') || error.status === 429) {
+        setError('Demasiados intentos. Esperá unos minutos e intentá de nuevo.')
+      } else if (msg.includes('not found') || msg.includes('no user') || msg.includes('invalid') || msg.includes('signup')) {
+        setError('No encontramos una cuenta con ese email. Contactá a tu administrador.')
+      } else {
+        setError(`Error al enviar el link: ${error.message}`)
+      }
     } else {
       setSent(true)
     }
