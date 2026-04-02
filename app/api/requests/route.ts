@@ -2,23 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-async function createNotionTicket({
-  ticketNumber,
-  title,
-  clientName,
-}: {
-  ticketNumber: number
-  title: string
-  clientName: string
-}) {
+async function createNotionTicket({ title, clientName }: { title: string; clientName: string }) {
   const apiKey = process.env.NOTION_API_KEY
   const databaseId = process.env.NOTION_DATABASE_ID
   if (!apiKey || !databaseId) return
 
-  const ticketId = `SW-${String(ticketNumber).padStart(3, '0')}`
-  const today = new Date().toISOString().split('T')[0]
-
-  await fetch('https://api.notion.com/v1/pages', {
+  const res = await fetch('https://api.notion.com/v1/pages', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -29,22 +18,13 @@ async function createNotionTicket({
       parent: { database_id: databaseId },
       properties: {
         'Ticket': {
-          title: [{ text: { content: title } }],
-        },
-        'ID 1': {
-          rich_text: [{ text: { content: ticketId } }],
+          title: [{ text: { content: `[${clientName}] ${title}` } }],
         },
         'Status': {
           status: { name: 'Pendiente' },
         },
         'Oficina': {
-          select: { name: 'Oficina IT' },
-        },
-        'Cliente': {
-          rich_text: [{ text: { content: clientName } }],
-        },
-        'Fecha Inicio': {
-          date: { start: today },
+          select: { name: 'Oficina It' },
         },
         'Select': {
           select: { name: 'Task' },
@@ -52,6 +32,11 @@ async function createNotionTicket({
       },
     }),
   })
+
+  if (!res.ok) {
+    const err = await res.json()
+    console.error('Notion error:', err)
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -65,10 +50,7 @@ export async function POST(req: NextRequest) {
   const adminClient = createAdminClient()
 
   // Fetch client name and ticket count in parallel
-  const [{ data: profile }, { count }] = await Promise.all([
-    adminClient.from('profiles').select('name').eq('id', user.id).single(),
-    adminClient.from('change_requests').select('*', { count: 'exact', head: true }),
-  ])
+  const { data: profile } = await adminClient.from('profiles').select('name').eq('id', user.id).single()
 
   const { error } = await supabase.from('change_requests').insert({
     client_user_id: user.id,
@@ -81,7 +63,6 @@ export async function POST(req: NextRequest) {
 
   // Create Notion ticket (non-blocking — don't fail if Notion is down)
   createNotionTicket({
-    ticketNumber: (count ?? 0) + 1,
     title,
     clientName: profile?.name ?? 'Sin nombre',
   }).catch(console.error)
