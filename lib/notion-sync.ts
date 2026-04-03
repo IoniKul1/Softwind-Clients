@@ -34,12 +34,11 @@ export async function syncNotionStatuses() {
 
   const adminClient = createAdminClient()
 
-  // Fetch non-done requests that have a notion_page_id
+  // Fetch all requests that have a notion_page_id
   const { data: requests } = await adminClient
     .from('change_requests')
     .select('id, status, notion_page_id')
     .not('notion_page_id', 'is', null)
-    .neq('status', 'done')
 
   if (!requests?.length) return
 
