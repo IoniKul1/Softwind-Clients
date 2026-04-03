@@ -68,10 +68,10 @@ async function createNotionTicket({
   description: string | null
   projectName: string
   attachments: { url: string; name: string; type: string }[]
-}) {
+}): Promise<string | null> {
   const apiKey = process.env.NOTION_API_KEY
   const databaseId = process.env.NOTION_DATABASE_ID
-  if (!apiKey || !databaseId) return
+  if (!apiKey || !databaseId) return null
 
   const clientPageId = await findNotionClientId(apiKey, projectName)
 
@@ -127,7 +127,11 @@ async function createNotionTicket({
   if (!res.ok) {
     const err = await res.json()
     console.error('Notion error:', JSON.stringify(err))
+    return null
   }
+
+  const data = await res.json()
+  return data.id as string
 }
 
 export async function POST(req: NextRequest) {
@@ -146,20 +150,32 @@ export async function POST(req: NextRequest) {
     .eq('client_user_id', user.id)
     .single()
 
-  const { error } = await supabase.from('change_requests').insert({
-    client_user_id: user.id,
-    title,
-    description: description || null,
-    attachments: attachments ?? [],
-  })
+  const { data: inserted, error } = await supabase
+    .from('change_requests')
+    .insert({
+      client_user_id: user.id,
+      title,
+      description: description || null,
+      attachments: attachments ?? [],
+    })
+    .select('id')
+    .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Create Notion ticket and save page ID back to Supabase
+  const requestId = inserted.id
   createNotionTicket({
     title,
     description: description || null,
     projectName: project?.name ?? '',
     attachments: attachments ?? [],
+  }).then(async (notionPageId) => {
+    if (!notionPageId) return
+    await adminClient
+      .from('change_requests')
+      .update({ notion_page_id: notionPageId })
+      .eq('id', requestId)
   }).catch(console.error)
 
   return NextResponse.json({ ok: true })

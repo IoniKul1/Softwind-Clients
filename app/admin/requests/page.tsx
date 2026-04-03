@@ -1,7 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { syncNotionStatuses } from '@/lib/notion-sync'
 import KanbanBoard from './KanbanBoard'
 
 export default async function AdminRequestsDashboard() {
+  // Sync Notion statuses before rendering
+  await syncNotionStatuses().catch(console.error)
+
   const adminClient = createAdminClient()
 
   const [{ data: requests }, { data: profiles }, { data: projects }] = await Promise.all([
