@@ -20,16 +20,20 @@ export default async function AdminRequestsDashboard() {
   const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.name]))
   const projectMap = Object.fromEntries((projects ?? []).map(p => [p.client_user_id, p.name]))
 
+  const dbId = process.env.NOTION_DATABASE_ID
+  const notionUrl = dbId ? `https://www.notion.so/${dbId.replace(/-/g, '')}` : null
+
   return (
     <div>
       <div className="mb-8">
         <h1 className="text-xl font-semibold mb-1">Pedidos de cambios</h1>
-        <p className="text-neutral-500 text-sm">Arrastrá las cards para cambiar el estado.</p>
+        <p className="text-neutral-500 text-sm">Los estados se sincronizan automáticamente desde Notion.</p>
       </div>
       <KanbanBoard
         initialRequests={requests ?? []}
         profileMap={profileMap}
         projectMap={projectMap}
+        notionUrl={notionUrl}
       />
     </div>
   )

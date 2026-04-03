@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ re
   const update: Record<string, string> = { updated_at: new Date().toISOString() }
 
   if (body.status !== undefined) {
-    if (!['pending', 'in_progress', 'done'].includes(body.status)) {
+    if (!['pending', 'in_progress', 'qa', 'done'].includes(body.status)) {
       return NextResponse.json({ error: 'Estado inválido' }, { status: 400 })
     }
     update.status = body.status

@@ -14,7 +14,7 @@ import {
 } from '@dnd-kit/core'
 import AttachmentPreview from '@/components/AttachmentPreview'
 
-type Status = 'pending' | 'in_progress' | 'done'
+type Status = 'pending' | 'in_progress' | 'qa' | 'done'
 type Assignee = 'Martin' | 'Santiago' | 'Yoni' | null
 
 const TEAM: { name: string; initials: string; color: string }[] = [
@@ -37,24 +37,28 @@ interface Request {
 const statusLabel: Record<Status, string> = {
   pending: 'Pendiente',
   in_progress: 'En curso',
+  qa: 'QA',
   done: 'Listo',
 }
 const statusColor: Record<Status, string> = {
   pending: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
   in_progress: 'text-brand bg-brand/10 border-brand/20',
+  qa: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
   done: 'text-green-400 bg-green-400/10 border-green-400/20',
 }
 const colLabel: Record<Status, string> = {
   pending: 'Pendientes',
   in_progress: 'En curso',
+  qa: 'QA',
   done: 'Listos',
 }
 const accent: Record<Status, string> = {
   pending: 'bg-yellow-400',
   in_progress: 'bg-brand',
+  qa: 'bg-purple-500',
   done: 'bg-green-500',
 }
-const cols: Status[] = ['pending', 'in_progress', 'done']
+const cols: Status[] = ['pending', 'in_progress', 'qa', 'done']
 
 function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'md' }) {
   const member = TEAM.find(t => t.name === name)
@@ -95,19 +99,20 @@ function RequestCard({ r, profileMap, projectMap, isDragging = false }: {
   )
 }
 
-function DraggableCard({ r, profileMap, projectMap, onOpen }: {
+function DraggableCard({ r, profileMap, projectMap, onOpen, locked }: {
   r: Request
   profileMap: Record<string, string>
   projectMap: Record<string, string>
   onOpen: (r: Request) => void
+  locked: boolean
 }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: r.id })
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: r.id, disabled: locked })
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className="cursor-grab active:cursor-grabbing"
+      {...(locked ? {} : listeners)}
+      {...(locked ? {} : attributes)}
+      className={locked ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}
       onClick={() => { if (!isDragging) onOpen(r) }}
     >
       <RequestCard r={r} profileMap={profileMap} projectMap={projectMap} isDragging={isDragging} />
@@ -115,14 +120,15 @@ function DraggableCard({ r, profileMap, projectMap, onOpen }: {
   )
 }
 
-function Column({ status, requests, profileMap, projectMap, onOpen }: {
+function Column({ status, requests, profileMap, projectMap, onOpen, locked }: {
   status: Status
   requests: Request[]
   profileMap: Record<string, string>
   projectMap: Record<string, string>
   onOpen: (r: Request) => void
+  locked: boolean
 }) {
-  const { setNodeRef, isOver } = useDroppable({ id: status })
+  const { setNodeRef, isOver } = useDroppable({ id: status, disabled: locked })
   return (
     <div className="flex flex-col gap-3 min-w-0">
       <div className="flex items-center gap-2 mb-1">
@@ -138,7 +144,7 @@ function Column({ status, requests, profileMap, projectMap, onOpen }: {
           <p className="text-neutral-700 text-xs px-1 pt-1">Sin pedidos</p>
         )}
         {requests.map(r => (
-          <DraggableCard key={r.id} r={r} profileMap={profileMap} projectMap={projectMap} onOpen={onOpen} />
+          <DraggableCard key={r.id} r={r} profileMap={profileMap} projectMap={projectMap} onOpen={onOpen} locked={locked} />
         ))}
       </div>
     </div>
@@ -263,14 +269,17 @@ export default function KanbanBoard({
   initialRequests,
   profileMap,
   projectMap,
+  notionUrl,
 }: {
   initialRequests: Request[]
   profileMap: Record<string, string>
   projectMap: Record<string, string>
+  notionUrl: string | null
 }) {
   const [requests, setRequests] = useState(initialRequests)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [locked, setLocked] = useState(true)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
   const activeRequest = requests.find(r => r.id === activeId) ?? null
@@ -304,8 +313,48 @@ export default function KanbanBoard({
 
   return (
     <>
+      {/* Lock bar */}
+      <div className="flex items-center gap-3 mb-6 px-3.5 py-2.5 rounded-xl border border-neutral-800 bg-neutral-900/50">
+        <button
+          onClick={() => setLocked(l => !l)}
+          className={`flex items-center gap-2 text-xs font-medium px-2.5 py-1 rounded-lg border transition ${
+            locked
+              ? 'border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-200'
+              : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-400 hover:border-yellow-500/60'
+          }`}
+        >
+          {locked ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+            </svg>
+          )}
+          {locked ? 'Edición bloqueada' : 'Edición activa'}
+        </button>
+        <p className="text-xs text-neutral-600">
+          {locked
+            ? 'La buena práctica es gestionar los estados desde Notion.'
+            : 'Los cambios acá no se sincronizan a Notion.'}
+        </p>
+        {notionUrl && (
+          <a
+            href={notionUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto text-xs text-neutral-500 hover:text-neutral-300 transition shrink-0"
+          >
+            Abrir Notion →
+          </a>
+        )}
+      </div>
+
       <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
           {cols.map(s => (
             <Column
               key={s}
@@ -314,6 +363,7 @@ export default function KanbanBoard({
               profileMap={profileMap}
               projectMap={projectMap}
               onOpen={r => setSelectedId(r.id)}
+              locked={locked}
             />
           ))}
         </div>

@@ -2,13 +2,14 @@ import { createAdminClient } from './supabase/admin'
 
 const NOTION_VERSION = '2022-06-28'
 
-type AppStatus = 'pending' | 'in_progress' | 'done'
+type AppStatus = 'pending' | 'in_progress' | 'qa' | 'done'
 
 function mapNotionStatus(notionStatus: string): AppStatus {
   switch (notionStatus) {
     case 'In progress':
-    case 'QA':
       return 'in_progress'
+    case 'QA':
+      return 'qa'
     case 'Done':
       return 'done'
     default:
