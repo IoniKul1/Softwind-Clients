@@ -60,7 +60,7 @@ export function FormattedTextField({ label, value, onChange }: Props) {
     onUpdate: ({ editor }) => onChange(editor.getHTML(), 'html'),
     editorProps: {
       attributes: {
-        class: 'outline-none min-h-[200px] prose prose-invert prose-sm max-w-none',
+        class: 'outline-none min-h-[200px] tiptap-editor',
       },
     },
   })
@@ -195,11 +195,26 @@ export function FormattedTextField({ label, value, onChange }: Props) {
       </div>
 
       <style>{`
-        .ProseMirror table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-        .ProseMirror td, .ProseMirror th { border: 1px solid #404040; padding: 6px 10px; min-width: 80px; }
-        .ProseMirror th { background: #1a1a1a; font-weight: 600; }
-        .ProseMirror img { max-width: 100%; border-radius: 6px; margin: 0.5em 0; }
-        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #555; pointer-events: none; float: left; height: 0; }
+        .tiptap-editor { color: #e5e5e5; line-height: 1.7; }
+        .tiptap-editor h1 { font-size: 1.75rem; font-weight: 700; margin: 1rem 0 0.5rem; line-height: 1.2; }
+        .tiptap-editor h2 { font-size: 1.375rem; font-weight: 600; margin: 0.875rem 0 0.4rem; line-height: 1.3; }
+        .tiptap-editor h3 { font-size: 1.125rem; font-weight: 600; margin: 0.75rem 0 0.35rem; line-height: 1.4; }
+        .tiptap-editor p { margin: 0.4rem 0; }
+        .tiptap-editor strong { font-weight: 700; }
+        .tiptap-editor em { font-style: italic; }
+        .tiptap-editor s { text-decoration: line-through; }
+        .tiptap-editor code { background: #2a2a2a; border-radius: 4px; padding: 1px 5px; font-size: 0.85em; font-family: monospace; }
+        .tiptap-editor pre { background: #1a1a1a; border-radius: 8px; padding: 12px 16px; margin: 0.75rem 0; overflow-x: auto; }
+        .tiptap-editor pre code { background: none; padding: 0; font-size: 0.85em; }
+        .tiptap-editor blockquote { border-left: 3px solid #404040; padding-left: 12px; margin: 0.75rem 0; color: #999; }
+        .tiptap-editor ul { list-style: disc; padding-left: 1.25rem; margin: 0.4rem 0; }
+        .tiptap-editor ol { list-style: decimal; padding-left: 1.25rem; margin: 0.4rem 0; }
+        .tiptap-editor li { margin: 0.15rem 0; }
+        .tiptap-editor a { color: #3B5BF6; text-decoration: underline; }
+        .tiptap-editor table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        .tiptap-editor td, .tiptap-editor th { border: 1px solid #404040; padding: 6px 10px; min-width: 80px; }
+        .tiptap-editor th { background: #1a1a1a; font-weight: 600; }
+        .tiptap-editor img { max-width: 100%; border-radius: 6px; margin: 0.5em 0; }
       `}</style>
     </div>
   )
