@@ -11,13 +11,26 @@ interface AnnotatedImageProps {
   url: string
   name: string
   annotations?: Annotation[]
+  onEdit?: () => void
 }
 
-export default function AnnotatedImage({ url, name, annotations }: AnnotatedImageProps) {
+export default function AnnotatedImage({ url, name, annotations, onEdit }: AnnotatedImageProps) {
   const hasAnnotations = annotations && annotations.length > 0
 
+  const handleClick = () => {
+    if (onEdit) {
+      onEdit()
+    } else {
+      window.open(url, '_blank')
+    }
+  }
+
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="relative inline-block group">
+    <button
+      type="button"
+      onClick={handleClick}
+      className="relative inline-block group text-left hover:opacity-80 transition"
+    >
       <div className="relative inline-block w-full rounded-lg border border-neutral-800 overflow-hidden max-w-sm bg-neutral-900">
         <img src={url} alt={name} className="w-full h-auto block" />
 
@@ -39,6 +52,6 @@ export default function AnnotatedImage({ url, name, annotations }: AnnotatedImag
         )}
       </div>
       <div className="text-xs text-neutral-500 mt-1 group-hover:text-neutral-400 transition">{name}</div>
-    </a>
+    </button>
   )
 }

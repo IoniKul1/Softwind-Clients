@@ -127,30 +127,38 @@ export default function ImageAnnotator({ imageUrl, annotations, onChange }: Imag
 
       {/* Pending annotation input */}
       {pendingAnnotation && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 bg-neutral-900 border border-neutral-700 rounded-lg p-3">
+          <button
+            type="button"
+            onClick={() => setPendingAnnotation(null)}
+            disabled
+            className="w-6 h-6 rounded-full bg-neutral-800 text-neutral-400 flex items-center justify-center text-lg shrink-0 cursor-default"
+          >
+            +
+          </button>
           <input
             type="text"
             value={pendingLabel}
             onChange={e => setPendingLabel(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addAnnotation()}
-            placeholder="Describí qué está mal aquí..."
+            placeholder="Describe edits"
             autoFocus
-            className="flex-1 bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-xs outline-none focus:border-neutral-500 transition placeholder:text-neutral-600"
+            className="flex-1 bg-transparent text-xs outline-none placeholder:text-neutral-600 text-neutral-200"
           />
           <button
             type="button"
             onClick={addAnnotation}
             disabled={!pendingLabel.trim()}
-            className="px-3 py-2 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg disabled:opacity-50 hover:bg-yellow-300 transition"
+            className="w-6 h-6 rounded-full bg-yellow-400 text-neutral-950 flex items-center justify-center text-sm font-bold shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-yellow-300 transition"
           >
             ✓
           </button>
           <button
             type="button"
             onClick={() => setPendingAnnotation(null)}
-            className="px-3 py-2 border border-neutral-700 text-neutral-300 text-xs rounded-lg hover:border-neutral-500 transition"
+            className="w-6 h-6 rounded-full bg-neutral-700 text-neutral-300 flex items-center justify-center text-sm shrink-0 hover:bg-neutral-600 transition"
           >
-            Cancelar
+            ✕
           </button>
         </div>
       )}

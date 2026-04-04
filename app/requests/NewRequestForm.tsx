@@ -190,11 +190,7 @@ export default function NewRequestForm({ userId }: { userId: string }) {
                       </button>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setAnnotatingIndex(i)}
-                      className="relative group inline-block w-full max-w-lg text-left hover:opacity-80 transition"
-                    >
+                    <div className="relative group inline-block w-full max-w-lg">
                       <img src={a.url} alt={a.name} className="w-full h-auto rounded-lg border border-neutral-800" />
                       {a.annotations && a.annotations.length > 0 && (
                         <div className="absolute inset-0 rounded-lg pointer-events-none">
@@ -208,10 +204,14 @@ export default function NewRequestForm({ userId }: { userId: string }) {
                           ))}
                         </div>
                       )}
-                      <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition">
-                        <span className="px-3 py-1.5 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg">
+                      <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition pointer-events-none group-hover:pointer-events-auto">
+                        <button
+                          type="button"
+                          onClick={() => setAnnotatingIndex(i)}
+                          className="px-3 py-1.5 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg hover:bg-yellow-300"
+                        >
                           Marcar
-                        </span>
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); setAttachments(atts => atts.filter((_, j) => j !== i)) }}
@@ -220,7 +220,7 @@ export default function NewRequestForm({ userId }: { userId: string }) {
                           Eliminar
                         </button>
                       </div>
-                    </button>
+                    </div>
                   )
                 ) : (
                   <div className="relative group w-fit">
