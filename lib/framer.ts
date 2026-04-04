@@ -321,6 +321,7 @@ export async function updateItemAndPublish(
 
     console.log('[updateItem] publishing...')
     const published = await framer.publish()
+    console.log('[updateItem] publish result:', JSON.stringify(published, null, 2))
     await framer.deploy(published.deployment.id)
     console.log('[updateItem] done')
   })
