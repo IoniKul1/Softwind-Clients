@@ -108,7 +108,8 @@ Respondé SOLO con un número entero. Sin texto adicional.`,
       }],
     })
     const n = parseInt((message.content[0] as any).text.trim(), 10)
-    return isNaN(n) ? 30 : Math.max(5, Math.min(480, n))
+    const raw = isNaN(n) ? 30 : Math.max(5, Math.min(480, n))
+    return Math.round(raw * 0.6)
   } catch {
     return 30
   }
