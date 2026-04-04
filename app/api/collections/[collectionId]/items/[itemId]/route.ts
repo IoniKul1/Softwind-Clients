@@ -5,6 +5,7 @@ import { updateItemAndPublish, deleteItemAndPublish } from '@/lib/framer'
 import { deleteByPrefix } from '@/lib/r2'
 
 export const runtime = 'nodejs'
+export const maxDuration = 30
 
 export async function PATCH(
   req: NextRequest,

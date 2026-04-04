@@ -226,7 +226,7 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
   return result
 }
 
-export async function createItemAndPublish(
+export async function createItem(
   projectUrl: string,
   apiKey: string,
   collectionId: string,
@@ -252,10 +252,11 @@ export async function createItemAndPublish(
       if (!col) throw new Error(`Collection ${collectionId} not found`)
       await (col as any).addItems([{ slug: item.slug, draft: item.draft ?? false, fieldData: cleanFieldData }])
     }
-
-    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
   })
 }
+
+// Keep old name as alias for backwards compatibility
+export const createItemAndPublish = createItem
 
 export async function deleteItemAndPublish(
   projectUrl: string,
@@ -275,7 +276,6 @@ export async function deleteItemAndPublish(
       await (col as any).removeItems([itemId])
     }
 
-    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
   })
 }
 
@@ -305,7 +305,15 @@ export async function updateItemAndPublish(
 
       await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
     }
+  })
+}
 
-    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
+export async function publishProject(
+  projectUrl: string,
+  apiKey: string
+): Promise<void> {
+  await withFramer(projectUrl, apiKey, async (framer) => {
+    const published = await framer.publish()
+    await framer.deploy(published.deployment.id).catch(() => {})
   })
 }

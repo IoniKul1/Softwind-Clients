@@ -12,15 +12,18 @@ interface Props {
   deleteUrl?: string
   backUrl?: string
   uploadPrefix?: string
+  publishUrl?: string
 }
 
-export default function ItemEditClient({ collectionId, item, fields, saveUrl, deleteUrl, backUrl, uploadPrefix }: Props) {
+export default function ItemEditClient({ collectionId, item, fields, saveUrl, deleteUrl, backUrl, uploadPrefix, publishUrl }: Props) {
   const router = useRouter()
   const [fieldData, setFieldData] = useState<Record<string, FramerFieldValue>>(item.fieldData)
   const [draft, setDraft] = useState(item.draft ?? false)
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [errorFields, setErrorFields] = useState<Set<string>>(new Set())
+  const [publishing, setPublishing] = useState(false)
+  const [publishStatus, setPublishStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   function handleChange(fieldId: string, value: FramerFieldValue) {
     setFieldData((prev) => ({ ...prev, [fieldId]: value }))
@@ -47,18 +50,46 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
     setErrorFields(new Set())
     setStatus('saving')
     setErrorMsg('')
-    const res = await fetch(saveUrl ?? `/api/collections/${collectionId}/items/${item.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: item.slug, draft, fieldData }),
-    })
-    if (res.ok) {
-      setStatus('done')
-      setTimeout(() => setStatus('idle'), 3000)
-    } else {
-      const data = await res.json()
-      setErrorMsg(data.error ?? 'Error al guardar')
+    try {
+      const res = await fetch(saveUrl ?? `/api/collections/${collectionId}/items/${item.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: item.slug, draft, fieldData }),
+      })
+      if (res.ok) {
+        setStatus('done')
+        setPublishStatus('idle')
+        setTimeout(() => setStatus('idle'), 4000)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error ?? 'Error al guardar')
+        setStatus('error')
+      }
+    } catch {
+      setErrorMsg('Error de red. Intentá de nuevo.')
       setStatus('error')
+    }
+  }
+
+  async function handlePublish() {
+    setPublishing(true)
+    setPublishStatus('idle')
+    try {
+      const url = publishUrl ?? `/api/collections/${collectionId}/publish`
+      const res = await fetch(url, { method: 'POST' })
+      if (res.ok) {
+        setPublishStatus('done')
+        setTimeout(() => setPublishStatus('idle'), 4000)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error ?? 'Error al publicar')
+        setPublishStatus('error')
+      }
+    } catch {
+      setErrorMsg('Error de red al publicar.')
+      setPublishStatus('error')
+    } finally {
+      setPublishing(false)
     }
   }
 
@@ -107,19 +138,29 @@ export default function ItemEditClient({ collectionId, item, fields, saveUrl, de
           disabled={status === 'saving'}
           className="w-full py-3 bg-brand text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-brand-hover transition"
         >
-          {status === 'saving' ? 'Publicando...' : 'Guardar y publicar →'}
+          {status === 'saving' ? 'Guardando...' : 'Guardar →'}
+        </button>
+
+        <button
+          onClick={handlePublish}
+          disabled={publishing || status === 'saving'}
+          className="w-full py-3 border border-neutral-700 text-neutral-200 font-medium rounded-full text-sm disabled:opacity-30 hover:border-neutral-500 transition"
+        >
+          {publishing ? 'Publicando en Framer...' : 'Publicar en Framer →'}
         </button>
 
         <button
           onClick={handleDelete}
-          disabled={status === 'saving'}
+          disabled={status === 'saving' || publishing}
           className="w-full py-2 text-red-500 text-sm disabled:opacity-30 hover:text-red-400 transition"
         >
           Eliminar item
         </button>
 
-        {status === 'done' && <p className="text-green-400 text-xs text-center">✓ Cambios publicados</p>}
+        {status === 'done' && <p className="text-green-400 text-xs text-center">✓ Cambios guardados</p>}
         {status === 'error' && <p className="text-red-400 text-xs text-center">{errorMsg}</p>}
+        {publishStatus === 'done' && <p className="text-green-400 text-xs text-center">✓ Publicado en Framer</p>}
+        {publishStatus === 'error' && <p className="text-red-400 text-xs text-center">{errorMsg}</p>}
       </div>
     </div>
   )

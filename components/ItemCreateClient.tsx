@@ -139,17 +139,22 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
     }
     setStatus('saving')
     setErrorMsg('')
-    const res = await fetch(createUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug: slug.trim(), fieldData }),
-    })
-    if (res.ok) {
-      setStatus('done')
-      setTimeout(() => router.push(backUrl), 1500)
-    } else {
-      const data = await res.json()
-      setErrorMsg(data.error ?? 'Error al crear')
+    try {
+      const res = await fetch(createUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: slug.trim(), fieldData }),
+      })
+      if (res.ok) {
+        setStatus('done')
+        setTimeout(() => router.push(backUrl), 1500)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.error ?? 'Error al crear')
+        setStatus('error')
+      }
+    } catch {
+      setErrorMsg('Error de red. Intentá de nuevo.')
       setStatus('error')
     }
   }
