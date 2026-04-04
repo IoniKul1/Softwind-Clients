@@ -1,11 +1,22 @@
 'use client'
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import ImageAnnotator from '@/components/ImageAnnotator'
+
+interface Annotation {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  label: string
+}
 
 interface Attachment {
   url: string
   name: string
   type: 'image' | 'file'
+  annotations?: Annotation[]
 }
 
 async function compressImage(file: File, quality = 0.4): Promise<Blob> {
@@ -66,6 +77,7 @@ export default function NewRequestForm({ userId }: { userId: string }) {
   const [form, setForm] = useState({ title: '', description: '' })
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [uploadError, setUploadError] = useState('')
+  const [annotatingIndex, setAnnotatingIndex] = useState<number | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleFiles(files: FileList | null) {
@@ -154,28 +166,77 @@ export default function NewRequestForm({ userId }: { userId: string }) {
 
         {/* Preview */}
         {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="mt-3 flex flex-col gap-4">
             {attachments.map((a, i) => (
-              <div key={i} className="relative group">
+              <div key={i} className="relative">
                 {a.type === 'image' ? (
-                  <img
-                    src={a.url}
-                    alt={a.name}
-                    className="w-16 h-16 object-cover rounded-lg border border-neutral-800"
-                  />
+                  annotatingIndex === i ? (
+                    <div>
+                      <ImageAnnotator
+                        imageUrl={a.url}
+                        annotations={a.annotations ?? []}
+                        onChange={anns => {
+                          const updated = [...attachments]
+                          updated[i] = { ...a, annotations: anns }
+                          setAttachments(updated)
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAnnotatingIndex(null)}
+                        className="mt-2 text-xs px-3 py-1 border border-neutral-700 rounded-lg text-neutral-300 hover:border-neutral-500 transition"
+                      >
+                        Listo
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative group inline-block w-full max-w-sm">
+                      <img src={a.url} alt={a.name} className="w-full h-auto rounded-lg border border-neutral-800" />
+                      {a.annotations && a.annotations.length > 0 && (
+                        <div className="absolute inset-0 rounded-lg pointer-events-none">
+                          {a.annotations.map((ann, idx) => (
+                            <div key={ann.id} className="absolute" style={{ left: `${ann.x}%`, top: `${ann.y}%`, width: `${ann.w}%`, height: `${ann.h}%` }}>
+                              <div className="w-full h-full border-2 border-dashed border-yellow-400" />
+                              <div className="absolute top-0 left-0 w-4 h-4 bg-yellow-400 text-neutral-950 text-[10px] font-bold flex items-center justify-center rounded-full">
+                                {idx + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition pointer-events-none group-hover:pointer-events-auto">
+                        <button
+                          type="button"
+                          onClick={() => setAnnotatingIndex(i)}
+                          className="px-3 py-1.5 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg hover:bg-yellow-300"
+                        >
+                          Marcar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAttachments(atts => atts.filter((_, j) => j !== i))}
+                          className="px-3 py-1.5 bg-red-500/80 text-white text-xs font-medium rounded-lg hover:bg-red-600"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ) : (
-                  <div className="w-16 h-16 rounded-lg border border-neutral-800 bg-neutral-900 flex flex-col items-center justify-center gap-1">
-                    <span className="text-lg">📄</span>
-                    <span className="text-[9px] text-neutral-600 text-center px-1 truncate w-full text-center">{a.name.split('.').pop()}</span>
+                  <div className="relative group w-fit">
+                    <div className="w-16 h-16 rounded-lg border border-neutral-800 bg-neutral-900 flex flex-col items-center justify-center gap-1">
+                      <span className="text-lg">📄</span>
+                      <span className="text-[9px] text-neutral-600 text-center px-1 truncate w-full">{a.name.split('.').pop()}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(atts => atts.filter((_, j) => j !== i))}
+                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-neutral-700 text-white text-[10px] hidden group-hover:flex items-center justify-center"
+                    >
+                      ×
+                    </button>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setAttachments(atts => atts.filter((_, j) => j !== i))}
-                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-neutral-700 text-white text-[10px] hidden group-hover:flex items-center justify-center"
-                >
-                  ×
-                </button>
               </div>
             ))}
           </div>

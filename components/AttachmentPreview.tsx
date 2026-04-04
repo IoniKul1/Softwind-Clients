@@ -1,22 +1,28 @@
+import AnnotatedImage from './AnnotatedImage'
+
+interface Annotation {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  label: string
+}
+
 interface Attachment {
   url: string
   name: string
   type: 'image' | 'file'
+  annotations?: Annotation[]
 }
 
 export default function AttachmentPreview({ attachments }: { attachments: Attachment[] }) {
   if (!attachments?.length) return null
   return (
-    <div className="flex flex-wrap gap-2 mt-3">
+    <div className="flex flex-wrap gap-4 mt-3">
       {attachments.map((a, i) =>
         a.type === 'image' ? (
-          <a key={i} href={a.url} target="_blank" rel="noopener noreferrer">
-            <img
-              src={a.url}
-              alt={a.name}
-              className="w-16 h-16 object-cover rounded-lg border border-neutral-800 hover:border-neutral-600 transition"
-            />
-          </a>
+          <AnnotatedImage key={i} url={a.url} name={a.name} annotations={a.annotations} />
         ) : (
           <a
             key={i}

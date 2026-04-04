@@ -17,6 +17,22 @@ import AttachmentPreview from '@/components/AttachmentPreview'
 type Status = 'pending' | 'in_progress' | 'qa' | 'done'
 type Assignee = 'Martin' | 'Santiago' | 'Yoni' | null
 
+interface Annotation {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  label: string
+}
+
+interface Attachment {
+  url: string
+  name: string
+  type: 'image' | 'file'
+  annotations?: Annotation[]
+}
+
 const TEAM: { name: string; initials: string; color: string }[] = [
   { name: 'Martin',   initials: 'M', color: 'bg-violet-600' },
   { name: 'Santiago', initials: 'S', color: 'bg-orange-500' },
@@ -30,7 +46,7 @@ interface Request {
   description: string | null
   status: Status
   assigned_to: Assignee
-  attachments: { url: string; name: string; type: 'image' | 'file' }[]
+  attachments: Attachment[]
   created_at: string
 }
 
