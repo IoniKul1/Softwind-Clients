@@ -168,6 +168,14 @@ export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
 
+  // Fetch notion_page_id before deleting
+  const { data: request } = await supabase
+    .from('change_requests')
+    .select('notion_page_id')
+    .eq('id', id)
+    .eq('client_user_id', user.id)
+    .single()
+
   const { error } = await supabase
     .from('change_requests')
     .delete()
@@ -175,6 +183,22 @@ export async function DELETE(req: NextRequest) {
     .eq('client_user_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Archive in Notion (Notion has no true delete — archive is the equivalent)
+  const notionPageId = request?.notion_page_id
+  const apiKey = process.env.NOTION_API_KEY
+  if (notionPageId && apiKey) {
+    fetch(`https://api.notion.com/v1/pages/${notionPageId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Notion-Version': NOTION_VERSION,
+      },
+      body: JSON.stringify({ archived: true }),
+    }).catch(console.error)
+  }
+
   return NextResponse.json({ ok: true })
 }
 
