@@ -254,7 +254,7 @@ export async function createItemAndPublish(
     }
 
     const published = await framer.publish()
-    await framer.deploy(published.deployment.id)
+    await framer.deploy(published.deployment.id).catch(() => {})
   })
 }
 
@@ -277,7 +277,7 @@ export async function deleteItemAndPublish(
     }
 
     const published = await framer.publish()
-    await framer.deploy(published.deployment.id)
+    await framer.deploy(published.deployment.id).catch(() => {})
   })
 }
 
@@ -289,40 +289,26 @@ export async function updateItemAndPublish(
 ): Promise<void> {
   await withFramer(projectUrl, apiKey, async (framer) => {
     const fieldData = normalizeFieldData(item.fieldData)
-    console.log('[updateItem] normalized fieldData keys:', Object.keys(fieldData))
-    console.log('[updateItem] formattedText fields:', JSON.stringify(
-      Object.fromEntries(Object.entries(fieldData).filter(([,v]: any) => v?.type === 'formattedText')),
-      null, 2
-    ))
 
     // Try ManagedCollection first (plugin-managed CMS collections).
-    console.log('[updateItem] getting managed collections...')
     const managedCols = await framer.getManagedCollections()
     const managedCol = managedCols.find((c: any) => c.id === collectionId)
     if (managedCol) {
-      console.log('[updateItem] using ManagedCollection.addItems')
       await managedCol.addItems([{ ...item, fieldData } as any])
     } else {
-      console.log('[updateItem] using regular Collection.setAttributes')
+      // Regular (manually-managed) collection: use CollectionItem.setAttributes.
       const cols = await framer.getCollections()
       const col = cols.find((c: any) => c.id === collectionId)
       if (!col) throw new Error(`Collection ${collectionId} not found`)
 
-      console.log('[updateItem] calling col.getItems()...')
       const collectionItems = await col.getItems()
-      console.log('[updateItem] col.getItems() succeeded, finding item:', item.id)
       const collectionItem = collectionItems.find((ci: any) => ci.id === item.id)
       if (!collectionItem) throw new Error(`Item ${item.id} not found in collection ${collectionId}`)
 
-      console.log('[updateItem] calling setAttributes...')
       await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
-      console.log('[updateItem] setAttributes succeeded')
     }
 
-    console.log('[updateItem] publishing...')
     const published = await framer.publish()
-    console.log('[updateItem] publish result:', JSON.stringify(published, null, 2))
-    await framer.deploy(published.deployment.id)
-    console.log('[updateItem] done')
+    await framer.deploy(published.deployment.id).catch(() => {})
   })
 }
