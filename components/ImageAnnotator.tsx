@@ -92,7 +92,7 @@ export default function ImageAnnotator({ imageUrl, annotations, onChange }: Imag
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className="relative bg-neutral-900 rounded-lg border border-neutral-800 overflow-hidden select-none"
+        className="relative bg-neutral-900 rounded-lg border border-neutral-800 overflow-hidden select-none max-w-lg"
         style={{ cursor: dragging ? 'crosshair' : 'pointer' }}
       >
         <img src={imageUrl} alt="annotate" className="w-full h-auto block" />

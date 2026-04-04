@@ -190,7 +190,11 @@ export default function NewRequestForm({ userId }: { userId: string }) {
                       </button>
                     </div>
                   ) : (
-                    <div className="relative group inline-block w-full max-w-sm">
+                    <button
+                      type="button"
+                      onClick={() => setAnnotatingIndex(i)}
+                      className="relative group inline-block w-full max-w-lg text-left hover:opacity-80 transition"
+                    >
                       <img src={a.url} alt={a.name} className="w-full h-auto rounded-lg border border-neutral-800" />
                       {a.annotations && a.annotations.length > 0 && (
                         <div className="absolute inset-0 rounded-lg pointer-events-none">
@@ -204,23 +208,19 @@ export default function NewRequestForm({ userId }: { userId: string }) {
                           ))}
                         </div>
                       )}
-                      <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition pointer-events-none group-hover:pointer-events-auto">
-                        <button
-                          type="button"
-                          onClick={() => setAnnotatingIndex(i)}
-                          className="px-3 py-1.5 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg hover:bg-yellow-300"
-                        >
+                      <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition">
+                        <span className="px-3 py-1.5 bg-yellow-400 text-neutral-950 text-xs font-medium rounded-lg">
                           Marcar
-                        </button>
+                        </span>
                         <button
                           type="button"
-                          onClick={() => setAttachments(atts => atts.filter((_, j) => j !== i))}
+                          onClick={(e) => { e.stopPropagation(); setAttachments(atts => atts.filter((_, j) => j !== i)) }}
                           className="px-3 py-1.5 bg-red-500/80 text-white text-xs font-medium rounded-lg hover:bg-red-600"
                         >
                           Eliminar
                         </button>
                       </div>
-                    </div>
+                    </button>
                   )
                 ) : (
                   <div className="relative group w-fit">
