@@ -192,6 +192,10 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
     if (!entry) { result[id] = entry; continue }
     const { type, value } = entry
     switch (type) {
+      case 'formattedText':
+        // Strip valueByLocale (read format) — write only accepts { type, value, contentType }
+        result[id] = { type: 'formattedText', value: typeof value === 'string' ? value : '', contentType: (entry as any).contentType ?? 'html' }
+        break
       case 'image':
       case 'file':
         // framer-api expects a URL string, not an object
