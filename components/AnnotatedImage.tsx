@@ -1,3 +1,5 @@
+'use client'
+
 interface Annotation {
   id: string
   x: number
