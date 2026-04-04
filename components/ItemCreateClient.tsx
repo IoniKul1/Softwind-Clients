@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { FramerField, FramerFieldValue } from '@/lib/types'
 import { FieldRenderer } from '@/components/FieldRenderer'
@@ -64,6 +64,16 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
   // NOA recommendation
   const [recommending, setRecommending] = useState(false)
   const [recommendError, setRecommendError] = useState('')
+  const [loadingStep, setLoadingStep] = useState(0)
+
+  const recommendingMessages = ['Leyendo tu contenido...', 'NOA está analizando...']
+
+  useEffect(() => {
+    if (!recommending) { setLoadingStep(0); return }
+    setLoadingStep(0)
+    const interval = setInterval(() => setLoadingStep(s => Math.min(s + 1, recommendingMessages.length - 1)), 3000)
+    return () => clearInterval(interval)
+  }, [recommending])
 
   function handleChange(fieldId: string, value: FramerFieldValue) {
     setFieldData((prev) => ({ ...prev, [fieldId]: value }))
@@ -156,8 +166,8 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
               style={{ objectFit: 'contain', width: '100%', height: '100%',
                 position: 'absolute', inset: 0, animation: 'logo-reveal 1.8s ease-in-out infinite' }} />
           </div>
-          <p className="text-neutral-400 text-xs tracking-wide" style={{ animation: 'fade-in 0.6s ease forwards' }}>
-            NOA está eligiendo un tema y escribiendo tu blog...
+          <p key={loadingStep} className="text-neutral-400 text-xs tracking-wide" style={{ animation: 'fade-in 0.4s ease forwards' }}>
+            {recommendingMessages[loadingStep]}
           </p>
           <style>{`
             @keyframes logo-reveal {
@@ -185,7 +195,7 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
                 position: 'absolute', inset: 0, animation: 'logo-reveal 1.8s ease-in-out infinite' }} />
           </div>
           <p className="text-neutral-400 text-xs tracking-wide" style={{ animation: 'fade-in 0.6s ease forwards' }}>
-            NOA está escribiendo tu contenido...
+            NOA está escribiendo tu blog...
           </p>
           <style>{`
             @keyframes logo-reveal {
