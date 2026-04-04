@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import NewRequestForm from './NewRequestForm'
 import AttachmentPreview from '@/components/AttachmentPreview'
+import DeleteRequestButton from './DeleteRequestButton'
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -50,9 +51,12 @@ export default async function RequestsPage() {
               <p className="text-neutral-500 text-xs mt-1.5 leading-relaxed">{r.description}</p>
             )}
             <AttachmentPreview attachments={r.attachments ?? []} />
-            <p className="text-neutral-700 text-xs mt-2">
-              {new Date(r.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-neutral-700 text-xs">
+                {new Date(r.created_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+              <DeleteRequestButton id={r.id} />
+            </div>
           </div>
         ))}
       </div>
