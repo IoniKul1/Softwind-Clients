@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const NOTION_VERSION = '2022-06-28'
 const PEOPLE_DB_ID = '2a5df5a885468076b9fecc275ad2d4fb'
@@ -80,16 +83,49 @@ function buildAttachmentBlocks(attachments: AttachmentInput[]) {
   return blocks
 }
 
+async function estimateMinutes(title: string, description: string | null): Promise<number> {
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 10,
+      messages: [{
+        role: 'user',
+        content: `Estimá en minutos cuánto llevaría implementar este cambio en Framer (editor web visual).
+
+Referencia:
+- Cambio de texto o copy: 5-15 min
+- Cambio de imagen o video: 10-20 min
+- Ajuste de estilo, color o tipografía: 10-30 min
+- Agregar o editar una sección: 30-60 min
+- Nuevo componente o animación: 60-120 min
+- Cambio estructural complejo: 90-180 min
+
+Pedido:
+Título: ${title}
+Descripción: ${description ?? '(sin descripción)'}
+
+Respondé SOLO con un número entero. Sin texto adicional.`,
+      }],
+    })
+    const n = parseInt((message.content[0] as any).text.trim(), 10)
+    return isNaN(n) ? 30 : Math.max(5, Math.min(480, n))
+  } catch {
+    return 30
+  }
+}
+
 async function createNotionTicket({
   title,
   description,
   projectName,
   attachments,
+  estimatedMinutes,
 }: {
   title: string
   description: string | null
   projectName: string
   attachments: AttachmentInput[]
+  estimatedMinutes: number
 }): Promise<string | null> {
   const apiKey = process.env.NOTION_API_KEY
   const databaseId = process.env.NOTION_DATABASE_ID
@@ -109,6 +145,9 @@ async function createNotionTicket({
     },
     'Select': {
       select: { name: 'Task' },
+    },
+    'minutos estimados': {
+      number: estimatedMinutes,
     },
   }
 
@@ -231,17 +270,22 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Create Notion ticket — awaited with 12s timeout so Vercel doesn't kill it mid-flight
+  // Estimate minutes + create Notion ticket with a 20s overall timeout
   const requestId = inserted.id
+  const timeout = <T>(ms: number, fallback: T): Promise<T> =>
+    new Promise(resolve => setTimeout(() => resolve(fallback), ms))
+
   try {
+    const minutes = await Promise.race([estimateMinutes(title, description || null), timeout(8000, 30)])
     const notionPageId = await Promise.race([
       createNotionTicket({
         title,
         description: description || null,
         projectName: project?.name ?? '',
         attachments: attachments ?? [],
+        estimatedMinutes: minutes,
       }),
-      new Promise<null>(resolve => setTimeout(() => resolve(null), 12000)),
+      timeout(12000, null),
     ])
     if (notionPageId) {
       await adminClient
