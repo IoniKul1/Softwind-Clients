@@ -193,13 +193,19 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
                 onClick={handleAcceptRecommendation}
                 className="flex-1 py-2.5 bg-brand text-white text-sm font-medium rounded-xl hover:bg-brand-hover transition"
               >
-                Generar este blog →
+                Escribir este blog →
+              </button>
+              <button
+                onClick={handleRecommend}
+                className="px-4 py-2.5 border border-neutral-700 text-neutral-400 text-sm rounded-xl hover:border-neutral-500 transition"
+              >
+                Otra idea
               </button>
               <button
                 onClick={() => setRecommendation(null)}
-                className="px-4 py-2.5 border border-neutral-700 text-neutral-400 text-sm rounded-xl hover:border-neutral-500 transition"
+                className="px-3 py-2.5 text-neutral-600 text-sm hover:text-neutral-400 transition"
               >
-                Descartar
+                ✕
               </button>
             </div>
           </div>
@@ -217,7 +223,7 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
                 position: 'absolute', inset: 0, animation: 'logo-reveal 1.8s ease-in-out infinite' }} />
           </div>
           <p className="text-neutral-400 text-xs tracking-wide" style={{ animation: 'fade-in 0.6s ease forwards' }}>
-            Generando contenido con IA...
+            NOA está escribiendo tu contenido...
           </p>
           <style>{`
             @keyframes logo-reveal {
@@ -238,8 +244,8 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
       <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-900/40">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-sm font-medium">Generar con IA</p>
-            <p className="text-xs text-neutral-500 mt-0.5">NOA genera el contenido basándose en tus blogs existentes</p>
+            <p className="text-sm font-medium">NOA</p>
+            <p className="text-xs text-neutral-500 mt-0.5">La IA de Softwind que escribe tu contenido</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -280,7 +286,7 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
               disabled={generating || !topic.trim()}
               className="px-4 py-2 bg-brand text-white text-sm rounded-lg disabled:opacity-30 hover:bg-brand-hover transition shrink-0"
             >
-              {generating ? 'Generando...' : 'Generar'}
+              {generating ? 'NOA está escribiendo...' : 'Escribir con NOA'}
             </button>
           </div>
         )}
