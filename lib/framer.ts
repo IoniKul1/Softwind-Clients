@@ -1,4 +1,5 @@
 import { connect } from 'framer-api'
+import { marked } from 'marked'
 import type { FramerCollection, FramerEnumCase, FramerField, FramerItem } from './types'
 
 async function withFramer<T>(
@@ -109,11 +110,21 @@ function mapItems(items: any[], enumNameToId: Record<string, Record<string, stri
         }
         fieldData[fid] = { ...entry, value: val }
       } else if (entry?.type === 'formattedText') {
-        // Framer v3 stores formatted text as valueByLocale: { [localeId]: string }
+        // Framer v3 stores formatted text as valueByLocale: { [localeId]: string | { markdown?: string, html?: string } }
         const vbl = (entry as any).valueByLocale
         if (vbl && typeof vbl === 'object') {
           const localeId = Object.keys(vbl)[0]
-          fieldData[fid] = { type: 'formattedText', value: localeId ? vbl[localeId] : null, localeId }
+          const raw = localeId ? vbl[localeId] : null
+          let value: string | null = null
+          if (typeof raw === 'string') {
+            // Convert markdown to HTML if it doesn't look like HTML
+            value = raw.trimStart().startsWith('<') ? raw : marked(raw) as string
+          } else if (raw && typeof raw === 'object') {
+            const html = raw.html
+            const md = raw.markdown
+            value = html ?? (md ? marked(md) as string : null)
+          }
+          fieldData[fid] = { type: 'formattedText', value, localeId }
         } else {
           fieldData[fid] = entry
         }
