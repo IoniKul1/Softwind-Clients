@@ -26,7 +26,14 @@ async function findNotionClientId(apiKey: string, projectName: string): Promise<
   return data.results?.[0]?.id ?? null
 }
 
-function buildAttachmentBlocks(attachments: { url: string; name: string; type: string }[]) {
+interface AttachmentInput {
+  url: string
+  name: string
+  type: string
+  annotations?: { id: string; x: number; y: number; w: number; h: number; label: string }[]
+}
+
+function buildAttachmentBlocks(attachments: AttachmentInput[]) {
   if (!attachments?.length) return []
 
   const blocks: any[] = [
@@ -46,6 +53,18 @@ function buildAttachmentBlocks(attachments: { url: string; name: string; type: s
         type: 'image',
         image: { type: 'external', external: { url: att.url } },
       })
+      // Add numbered list of annotations below the image
+      if (att.annotations?.length) {
+        for (const ann of att.annotations) {
+          blocks.push({
+            object: 'block',
+            type: 'numbered_list_item',
+            numbered_list_item: {
+              rich_text: [{ type: 'text', text: { content: ann.label } }],
+            },
+          })
+        }
+      }
     } else {
       blocks.push({
         object: 'block',
@@ -67,7 +86,7 @@ async function createNotionTicket({
   title: string
   description: string | null
   projectName: string
-  attachments: { url: string; name: string; type: string }[]
+  attachments: AttachmentInput[]
 }): Promise<string | null> {
   const apiKey = process.env.NOTION_API_KEY
   const databaseId = process.env.NOTION_DATABASE_ID
