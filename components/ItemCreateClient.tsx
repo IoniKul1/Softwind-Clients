@@ -46,7 +46,7 @@ function emptyFieldData(fields: FramerField[]): Record<string, FramerFieldValue>
   return result
 }
 
-export default function ItemCreateClient({ fields, createUrl, backUrl, uploadBasePrefix }: Props) {
+export default function ItemCreateClient({ collectionId, fields, createUrl, backUrl, uploadBasePrefix }: Props) {
   const router = useRouter()
   const editableFields = fields.filter((f) => f.userEditable !== false)
   const [slug, setSlug] = useState('')
@@ -54,8 +54,38 @@ export default function ItemCreateClient({ fields, createUrl, backUrl, uploadBas
   const [status, setStatus] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
+  // AI generation
+  const [topic, setTopic] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [showAI, setShowAI] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const [fieldDataKey, setFieldDataKey] = useState(0)
+
   function handleChange(fieldId: string, value: FramerFieldValue) {
     setFieldData((prev) => ({ ...prev, [fieldId]: value }))
+  }
+
+  async function handleGenerate() {
+    if (!topic.trim()) return
+    setGenerating(true)
+    setAiError('')
+    const res = await fetch(`/api/collections/${collectionId}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic }),
+    })
+    setGenerating(false)
+    if (!res.ok) {
+      const d = await res.json()
+      setAiError(d.error ?? 'Error al generar')
+      return
+    }
+    const { slug: generatedSlug, fieldData: generated } = await res.json()
+    if (generatedSlug) setSlug(generatedSlug)
+    setFieldData(prev => ({ ...prev, ...generated }))
+    setFieldDataKey(k => k + 1) // remount editors with new content
+    setShowAI(false)
+    setTopic('')
   }
 
   async function handleCreate() {
@@ -83,6 +113,47 @@ export default function ItemCreateClient({ fields, createUrl, backUrl, uploadBas
 
   return (
     <div className="flex flex-col gap-6">
+      {/* AI Generator */}
+      <div className="border border-neutral-800 rounded-xl p-4 bg-neutral-900/40">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-sm font-medium">Generar con IA</p>
+            <p className="text-xs text-neutral-500 mt-0.5">Claude genera el contenido basándose en tus blogs existentes</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAI(s => !s)}
+            className="text-xs px-3 py-1.5 rounded-lg border border-neutral-700 text-neutral-300 hover:border-neutral-500 transition"
+          >
+            {showAI ? 'Cancelar' : 'Generar →'}
+          </button>
+        </div>
+
+        {showAI && (
+          <div className="flex gap-2 mt-2">
+            <input
+              type="text"
+              value={topic}
+              onChange={e => setTopic(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleGenerate()}
+              placeholder="Tema del blog, ej: 'beneficios del diseño web profesional'"
+              autoFocus
+              className="flex-1 bg-neutral-950 border border-neutral-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-neutral-500 transition placeholder:text-neutral-600"
+            />
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={generating || !topic.trim()}
+              className="px-4 py-2 bg-brand text-white text-sm rounded-lg disabled:opacity-30 hover:bg-brand-hover transition shrink-0"
+            >
+              {generating ? 'Generando...' : 'Generar'}
+            </button>
+          </div>
+        )}
+        {aiError && <p className="text-red-400 text-xs mt-2">{aiError}</p>}
+      </div>
+
+      {/* Slug */}
       <div className="flex flex-col gap-1">
         <label className="text-xs text-neutral-400">Slug</label>
         <input
@@ -96,7 +167,7 @@ export default function ItemCreateClient({ fields, createUrl, backUrl, uploadBas
 
       {editableFields.map((field) => (
         <FieldRenderer
-          key={field.id}
+          key={`${field.id}-${fieldDataKey}`}
           field={field}
           value={fieldData[field.id]}
           onChange={handleChange}
