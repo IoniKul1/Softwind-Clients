@@ -1,5 +1,4 @@
 import { connect } from 'framer-api'
-import { marked } from 'marked'
 import type { FramerCollection, FramerEnumCase, FramerField, FramerItem } from './types'
 
 async function withFramer<T>(
@@ -109,26 +108,6 @@ function mapItems(items: any[], enumNameToId: Record<string, Record<string, stri
           val = enumNameToId[fid][val]
         }
         fieldData[fid] = { ...entry, value: val }
-      } else if (entry?.type === 'formattedText') {
-        // Framer v3 stores formatted text as valueByLocale: { [localeId]: string | { markdown?: string, html?: string } }
-        console.log('[formattedText raw]', fid, JSON.stringify(entry, null, 2))
-        const vbl = (entry as any).valueByLocale
-        if (vbl && typeof vbl === 'object') {
-          const localeId = Object.keys(vbl)[0]
-          const raw = localeId ? vbl[localeId] : null
-          let value: string | null = null
-          if (typeof raw === 'string') {
-            // Convert markdown to HTML if it doesn't look like HTML
-            value = raw.trimStart().startsWith('<') ? raw : marked(raw) as string
-          } else if (raw && typeof raw === 'object') {
-            const html = raw.html
-            const md = raw.markdown
-            value = html ?? (md ? marked(md) as string : null)
-          }
-          fieldData[fid] = { type: 'formattedText', value, localeId }
-        } else {
-          fieldData[fid] = entry
-        }
       } else {
         fieldData[fid] = entry
       }
@@ -213,15 +192,6 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
     if (!entry) { result[id] = entry; continue }
     const { type, value } = entry
     switch (type) {
-      case 'formattedText': {
-        const localeId = (entry as any).localeId
-        if (localeId) {
-          result[id] = { type: 'formattedText', valueByLocale: { [localeId]: entry.value } }
-        } else {
-          result[id] = entry
-        }
-        break
-      }
       case 'image':
       case 'file':
         // framer-api expects a URL string, not an object
