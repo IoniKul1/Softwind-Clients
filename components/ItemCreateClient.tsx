@@ -72,7 +72,6 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
   async function handleRecommend() {
     setRecommending(true)
     setRecommendError('')
-    setRecommendation(null)
     try {
       const res = await fetch(`/api/collections/${collectionId}/recommend`, { method: 'POST' })
       if (!res.ok) {
