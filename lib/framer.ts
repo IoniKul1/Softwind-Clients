@@ -253,8 +253,7 @@ export async function createItemAndPublish(
       await (col as any).addItems([{ slug: item.slug, draft: item.draft ?? false, fieldData: cleanFieldData }])
     }
 
-    const published = await framer.publish()
-    await framer.deploy(published.deployment.id).catch(() => {})
+    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
   })
 }
 
@@ -276,8 +275,7 @@ export async function deleteItemAndPublish(
       await (col as any).removeItems([itemId])
     }
 
-    const published = await framer.publish()
-    await framer.deploy(published.deployment.id).catch(() => {})
+    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
   })
 }
 
@@ -308,7 +306,6 @@ export async function updateItemAndPublish(
       await collectionItem.setAttributes({ slug: item.slug, draft: item.draft, fieldData } as any)
     }
 
-    const published = await framer.publish()
-    await framer.deploy(published.deployment.id).catch(() => {})
+    await framer.publish().then(p => framer.deploy(p.deployment.id)).catch(() => {})
   })
 }
