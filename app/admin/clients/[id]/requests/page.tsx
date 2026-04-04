@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import RequestStatusButton from './RequestStatusButton'
 import AttachmentPreview from '@/components/AttachmentPreview'
+import PlanUsage from './PlanUsage'
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -27,18 +28,33 @@ export default async function AdminRequestsPage({ params }: { params: Promise<{ 
   const { id } = await params
   const adminClient = createAdminClient()
 
-  const { data: requests } = await adminClient
-    .from('change_requests')
-    .select('id, title, description, status, attachments, created_at')
-    .eq('client_user_id', id)
-    .order('created_at', { ascending: false })
+  const [{ data: requests }, { data: project }] = await Promise.all([
+    adminClient
+      .from('change_requests')
+      .select('id, title, description, status, attachments, created_at, estimated_minutes')
+      .eq('client_user_id', id)
+      .order('created_at', { ascending: false }),
+    adminClient
+      .from('projects')
+      .select('plan')
+      .eq('client_user_id', id)
+      .single(),
+  ])
+
+  const usedMinutes = requests?.reduce((sum, r) => sum + (r.estimated_minutes ?? 0), 0) ?? 0
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-xl font-semibold mb-1">Pedidos de cambios</h1>
         <p className="text-neutral-500 text-sm">Solicitudes enviadas por el cliente.</p>
       </div>
+
+      <PlanUsage
+        clientId={id}
+        currentPlan={(project?.plan as any) ?? null}
+        usedMinutes={usedMinutes}
+      />
 
       <div className="flex flex-col gap-3">
         {!requests?.length && (

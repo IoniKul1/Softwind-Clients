@@ -271,13 +271,16 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Estimate minutes + create Notion ticket with a 20s overall timeout
   const requestId = inserted.id
   const timeout = <T>(ms: number, fallback: T): Promise<T> =>
     new Promise(resolve => setTimeout(() => resolve(fallback), ms))
 
   try {
     const minutes = await Promise.race([estimateMinutes(title, description || null), timeout(8000, 30)])
+
+    // Save estimated minutes to Supabase
+    await adminClient.from('change_requests').update({ estimated_minutes: minutes }).eq('id', requestId)
+
     const notionPageId = await Promise.race([
       createNotionTicket({
         title,
