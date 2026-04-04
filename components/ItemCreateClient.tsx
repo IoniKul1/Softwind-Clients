@@ -29,7 +29,7 @@ function emptyFieldData(fields: FramerField[]): Record<string, FramerFieldValue>
         result[f.id] = { type: f.type, value: false }
         break
       case 'date':
-        result[f.id] = { type: f.type, value: null }
+        result[f.id] = { type: f.type, value: new Date().toISOString() }
         break
       case 'image':
       case 'file':
