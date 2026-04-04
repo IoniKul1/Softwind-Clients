@@ -63,7 +63,6 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
 
   // NOA recommendation
   const [recommending, setRecommending] = useState(false)
-  const [recommendation, setRecommendation] = useState<{ title: string; premise: string } | null>(null)
   const [recommendError, setRecommendError] = useState('')
 
   function handleChange(fieldId: string, value: FramerFieldValue) {
@@ -74,22 +73,21 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
     setRecommending(true)
     setRecommendError('')
     setRecommendation(null)
-    const res = await fetch(`/api/collections/${collectionId}/recommend`, { method: 'POST' })
-    setRecommending(false)
-    if (!res.ok) {
-      const d = await res.json()
-      setRecommendError(d.error ?? 'Error al obtener recomendación')
-      return
+    try {
+      const res = await fetch(`/api/collections/${collectionId}/recommend`, { method: 'POST' })
+      if (!res.ok) {
+        const d = await res.json()
+        setRecommendError(d.error ?? 'Error al obtener recomendación')
+        return
+      }
+      const { title, premise } = await res.json()
+      // Go straight to generation with the recommended topic
+      await handleGenerateWithTopic(`${title}. ${premise}`)
+    } catch {
+      setRecommendError('Tiempo de espera agotado. Intentá de nuevo.')
+    } finally {
+      setRecommending(false)
     }
-    const data = await res.json()
-    setRecommendation(data)
-  }
-
-  async function handleAcceptRecommendation() {
-    if (!recommendation) return
-    setRecommendation(null)
-    setTopic(recommendation.title + '. ' + recommendation.premise)
-    await handleGenerateWithTopic(recommendation.title + '. ' + recommendation.premise)
   }
 
   async function handleGenerate() {
@@ -160,7 +158,7 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
                 position: 'absolute', inset: 0, animation: 'logo-reveal 1.8s ease-in-out infinite' }} />
           </div>
           <p className="text-neutral-400 text-xs tracking-wide" style={{ animation: 'fade-in 0.6s ease forwards' }}>
-            NOA está analizando tus blogs...
+            NOA está eligiendo un tema y escribiendo tu blog...
           </p>
           <style>{`
             @keyframes logo-reveal {
@@ -174,46 +172,6 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
               to   { opacity: 1; transform: translateY(0); }
             }
           `}</style>
-        </div>
-      )}
-
-      {/* NOA recommendation card */}
-      {recommendation && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="w-full max-w-lg bg-neutral-950 border border-neutral-800 rounded-2xl p-6 flex flex-col gap-5 shadow-2xl">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-brand flex items-center justify-center shrink-0">
-                <span className="text-white text-[10px] font-bold">N</span>
-              </div>
-              <p className="text-xs text-neutral-400 font-medium">Recomendación de NOA</p>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <h3 className="text-white font-semibold text-base leading-snug">"{recommendation.title}"</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed">{recommendation.premise}</p>
-            </div>
-
-            <div className="flex gap-3 pt-1">
-              <button
-                onClick={handleAcceptRecommendation}
-                className="flex-1 py-2.5 bg-brand text-white text-sm font-medium rounded-xl hover:bg-brand-hover transition"
-              >
-                Escribir este blog →
-              </button>
-              <button
-                onClick={handleRecommend}
-                className="px-4 py-2.5 border border-neutral-700 text-neutral-400 text-sm rounded-xl hover:border-neutral-500 transition"
-              >
-                Otra idea
-              </button>
-              <button
-                onClick={() => setRecommendation(null)}
-                className="px-3 py-2.5 text-neutral-600 text-sm hover:text-neutral-400 transition"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
