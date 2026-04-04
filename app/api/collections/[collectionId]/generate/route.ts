@@ -3,8 +3,6 @@ export const maxDuration = 60
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
-import { decrypt } from '@/lib/crypto'
-import { getCollectionData } from '@/lib/framer'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -12,64 +10,47 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ collectionId: string }> }
 ) {
-  const { collectionId } = await params
-  const { topic } = await req.json()
+  await params // required by Next.js even if unused
+  const { topic, fields: clientFields } = await req.json()
   if (!topic?.trim()) return NextResponse.json({ error: 'Tema requerido' }, { status: 400 })
+  if (!clientFields?.length) return NextResponse.json({ error: 'Sin campos' }, { status: 400 })
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: project } = await supabase
-    .from('projects')
-    .select('framer_project_url, framer_api_key_encrypted')
-    .eq('client_user_id', user.id)
-    .single()
-
-  if (!project) return NextResponse.json({ error: 'Sin proyecto' }, { status: 404 })
-
-  const apiKey = decrypt(project.framer_api_key_encrypted)
-  const { fields, items } = await getCollectionData(project.framer_project_url, apiKey, collectionId)
-
-  // Only generate for text-based editable fields
+  // Use fields sent by the client — avoids a slow Framer connection
   const generatableTypes = ['string', 'formattedText']
-  const targetFields = fields.filter(f => f.userEditable !== false && generatableTypes.includes(f.type))
+  const targetFields = (clientFields as { id: string; name: string; type: string }[])
+    .filter(f => generatableTypes.includes(f.type))
 
   if (targetFields.length === 0) {
     return NextResponse.json({ error: 'No hay campos de texto para generar' }, { status: 400 })
   }
 
-  // Build context from up to 3 existing items
-  const examples = items.slice(0, 3).map(item => {
-    const data: Record<string, string> = {}
-    for (const f of targetFields) {
-      const val = item.fieldData[f.id]?.value
-      if (typeof val === 'string' && val.trim()) data[f.name] = val
-    }
-    return data
-  }).filter(d => Object.keys(d).length > 0)
+  const fieldSchema = targetFields
+    .map(f => `- "${f.name}" (${f.type === 'formattedText' ? 'rich text HTML' : 'plain text'})`)
+    .join('\n')
 
-  const fieldSchema = targetFields.map(f => `- "${f.name}" (${f.type === 'formattedText' ? 'rich text HTML' : 'plain text'})`).join('\n')
+  const prompt = `Sos NOA, la IA de Softwind. Escribís contenido de blog en español rioplatense, con tono profesional pero cercano.
 
-  const examplesText = examples.length > 0
-    ? `\nExisting content examples for tone/style reference:\n${JSON.stringify(examples, null, 2)}`
-    : ''
+Generá contenido para el siguiente tema: "${topic}"
 
-  const prompt = `You are a content writer. Generate blog/CMS content in Spanish (Argentina) for the following topic: "${topic}".
-
-Generate content for these fields:
+Campos a completar:
 ${fieldSchema}
-${examplesText}
 
-Rules:
-- Match the tone and style of the examples if provided
-- For "rich text HTML" fields: return valid HTML using <h2>, <h3>, <p>, <strong>, <em>, <ul>, <li> tags. No <html>/<body>/<head> wrappers.
-- For "plain text" fields: return plain text only, no HTML
-- Return a JSON object where keys are the exact field names and values are the generated content
-- Also include a "slug" key with a URL-friendly slug for the content (lowercase, hyphens, no special chars)
-- Write naturally, with depth and value for the reader
+Reglas:
+- Para campos "rich text HTML": usá HTML válido con <h2>, <h3>, <p>, <strong>, <em>, <ul>, <li>. Sin <html>/<body>/<head>.
+- Para campos "plain text": solo texto plano, sin HTML.
+- Incluí un campo "slug" con el slug URL del contenido (minúsculas, guiones, sin caracteres especiales).
+- Escribí con profundidad y valor real para el lector.
+- Devolvé SOLO JSON válido, sin explicaciones.
 
-Return ONLY valid JSON, no explanation.`
+Formato de respuesta:
+{
+  "slug": "...",
+  "Nombre del campo": "contenido..."
+}`
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
@@ -83,7 +64,6 @@ Return ONLY valid JSON, no explanation.`
 
   const generated = JSON.parse(jsonMatch[0])
 
-  // Map field names back to field IDs
   const fieldData: Record<string, { type: string; value: string; contentType?: string }> = {}
   for (const f of targetFields) {
     const val = generated[f.name]

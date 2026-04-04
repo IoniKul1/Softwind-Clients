@@ -104,7 +104,7 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
       const res = await fetch(`/api/collections/${collectionId}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: t }),
+        body: JSON.stringify({ topic: t, fields: editableFields.map(f => ({ id: f.id, name: f.name, type: f.type })) }),
       })
       if (!res.ok) {
         const d = await res.json()
