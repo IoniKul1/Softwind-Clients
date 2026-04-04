@@ -100,23 +100,28 @@ export default function ItemCreateClient({ collectionId, fields, createUrl, back
     if (!t.trim()) return
     setGenerating(true)
     setAiError('')
-    const res = await fetch(`/api/collections/${collectionId}/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic: t }),
-    })
-    setGenerating(false)
-    if (!res.ok) {
-      const d = await res.json()
-      setAiError(d.error ?? 'Error al generar')
-      return
+    try {
+      const res = await fetch(`/api/collections/${collectionId}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: t }),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setAiError(d.error ?? 'NOA no pudo generar el contenido. Intentá de nuevo.')
+        return
+      }
+      const { slug: generatedSlug, fieldData: generated } = await res.json()
+      if (generatedSlug) setSlug(generatedSlug)
+      setFieldData(prev => ({ ...prev, ...generated }))
+      setFieldDataKey(k => k + 1)
+      setShowAI(false)
+      setTopic('')
+    } catch {
+      setAiError('Tiempo de espera agotado. Intentá de nuevo.')
+    } finally {
+      setGenerating(false)
     }
-    const { slug: generatedSlug, fieldData: generated } = await res.json()
-    if (generatedSlug) setSlug(generatedSlug)
-    setFieldData(prev => ({ ...prev, ...generated }))
-    setFieldDataKey(k => k + 1) // remount editors with new content
-    setShowAI(false)
-    setTopic('')
   }
 
   async function handleCreate() {
