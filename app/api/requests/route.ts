@@ -31,6 +31,7 @@ interface AttachmentInput {
   name: string
   type: string
   annotations?: { id: string; x: number; y: number; w: number; h: number; label: string }[]
+  notionUrl?: string
 }
 
 function buildAttachmentBlocks(attachments: AttachmentInput[]) {
@@ -51,7 +52,7 @@ function buildAttachmentBlocks(attachments: AttachmentInput[]) {
       blocks.push({
         object: 'block',
         type: 'image',
-        image: { type: 'external', external: { url: att.url } },
+        image: { type: 'external', external: { url: att.notionUrl ?? att.url } },
       })
       // Add numbered list of annotations below the image
       if (att.annotations?.length) {

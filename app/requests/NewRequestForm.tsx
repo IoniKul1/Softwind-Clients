@@ -17,6 +17,7 @@ interface Attachment {
   name: string
   type: 'image' | 'file'
   annotations?: Annotation[]
+  notionUrl?: string  // annotated version rendered for Notion
 }
 
 async function compressImage(file: File, quality = 0.4): Promise<Blob> {
@@ -45,6 +46,78 @@ async function compressImage(file: File, quality = 0.4): Promise<Blob> {
     img.onerror = reject
     img.src = url
   })
+}
+
+async function renderAnnotatedBlob(imageUrl: string, annotations: Annotation[]): Promise<Blob | null> {
+  try {
+    const res = await fetch(imageUrl)
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = reject
+      el.src = objectUrl
+    })
+    URL.revokeObjectURL(objectUrl)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0)
+
+    const lw = Math.max(3, img.naturalWidth * 0.004)
+    const r = Math.max(18, img.naturalWidth * 0.022)
+
+    for (let i = 0; i < annotations.length; i++) {
+      const ann = annotations[i]
+      const x = (ann.x / 100) * img.naturalWidth
+      const y = (ann.y / 100) * img.naturalHeight
+      const w = (ann.w / 100) * img.naturalWidth
+      const h = (ann.h / 100) * img.naturalHeight
+
+      ctx.save()
+      // Bright blue dashed rect with black shadow
+      ctx.shadowColor = '#000'
+      ctx.shadowBlur = lw * 4
+      ctx.strokeStyle = '#2563EB'
+      ctx.lineWidth = lw
+      ctx.setLineDash([lw * 4, lw * 2])
+      ctx.strokeRect(x, y, w, h)
+
+      // Number badge
+      ctx.shadowBlur = lw * 3
+      ctx.fillStyle = '#2563EB'
+      ctx.beginPath()
+      ctx.arc(x + r, y + r, r, 0, Math.PI * 2)
+      ctx.fill()
+
+      ctx.shadowBlur = 0
+      ctx.fillStyle = '#fff'
+      ctx.font = `bold ${r * 1.1}px sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(String(i + 1), x + r, y + r)
+      ctx.restore()
+    }
+
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/jpeg', 0.92)
+    )
+  } catch {
+    return null
+  }
+}
+
+async function uploadBlob(blob: Blob, userId: string): Promise<string> {
+  const key = `requests/${userId}/${Date.now()}-annotated.jpg`
+  const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=image/jpeg`)
+  const { url } = await res.json()
+  await fetch(url, { method: 'PUT', body: blob, headers: { 'Content-Type': 'image/jpeg' } })
+  const publicBase = (process.env.NEXT_PUBLIC_R2_PUBLIC_URL ?? '').replace(/\/$/, '')
+  return `${publicBase}/${key}`
 }
 
 async function uploadFile(file: File, userId: string): Promise<Attachment> {
@@ -97,14 +170,27 @@ export default function NewRequestForm({ userId }: { userId: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    // For annotated images, render and upload the annotated version for Notion
+    const processedAttachments = await Promise.all(
+      attachments.map(async (att) => {
+        if (att.type !== 'image' || !att.annotations?.length) return att
+        const blob = await renderAnnotatedBlob(att.url, att.annotations)
+        if (!blob) return att
+        const notionUrl = await uploadBlob(blob, userId).catch(() => null)
+        return notionUrl ? { ...att, notionUrl } : att
+      })
+    )
+
     await fetch('/api/requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, attachments }),
+      body: JSON.stringify({ ...form, attachments: processedAttachments }),
     })
     setLoading(false)
     setForm({ title: '', description: '' })
     setAttachments([])
+    setAnnotatingIndex(null)
     setOpen(false)
     router.refresh()
   }
