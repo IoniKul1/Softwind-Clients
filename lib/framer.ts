@@ -214,7 +214,13 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
         result[id] = { type, value: typeof value === 'object' && value !== null ? (value.id ?? value.name ?? null) : value }
         break
       default:
-        result[id] = entry
+        // Strip valueByLocale from any field — read format includes it but write doesn't accept it
+        if ((entry as any).valueByLocale !== undefined) {
+          const { valueByLocale: _, ...clean } = entry as any
+          result[id] = clean
+        } else {
+          result[id] = entry
+        }
     }
   }
   return result
