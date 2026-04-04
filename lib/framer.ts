@@ -111,6 +111,7 @@ function mapItems(items: any[], enumNameToId: Record<string, Record<string, stri
         fieldData[fid] = { ...entry, value: val }
       } else if (entry?.type === 'formattedText') {
         // Framer v3 stores formatted text as valueByLocale: { [localeId]: string | { markdown?: string, html?: string } }
+        console.log('[formattedText raw]', fid, JSON.stringify(entry, null, 2))
         const vbl = (entry as any).valueByLocale
         if (vbl && typeof vbl === 'object') {
           const localeId = Object.keys(vbl)[0]
