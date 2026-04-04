@@ -184,7 +184,7 @@ export async function DELETE(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Archive in Notion (Notion has no true delete — archive is the equivalent)
+  // Set Notion status to "Eliminado"
   const notionPageId = request?.notion_page_id
   const apiKey = process.env.NOTION_API_KEY
   if (notionPageId && apiKey) {
@@ -195,7 +195,7 @@ export async function DELETE(req: NextRequest) {
         'Content-Type': 'application/json',
         'Notion-Version': NOTION_VERSION,
       },
-      body: JSON.stringify({ archived: true }),
+      body: JSON.stringify({ properties: { Status: { status: { name: 'Eliminado' } } } }),
     }).catch(console.error)
   }
 
