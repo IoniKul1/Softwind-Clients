@@ -54,6 +54,7 @@ export interface FramerFieldValue {
   type: string
   value: unknown
   contentType?: 'markdown' | 'html'
+  localeId?: string
 }
 
 export interface FramerItem {

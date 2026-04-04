@@ -108,6 +108,15 @@ function mapItems(items: any[], enumNameToId: Record<string, Record<string, stri
           val = enumNameToId[fid][val]
         }
         fieldData[fid] = { ...entry, value: val }
+      } else if (entry?.type === 'formattedText') {
+        // Framer v3 stores formatted text as valueByLocale: { [localeId]: string }
+        const vbl = (entry as any).valueByLocale
+        if (vbl && typeof vbl === 'object') {
+          const localeId = Object.keys(vbl)[0]
+          fieldData[fid] = { type: 'formattedText', value: localeId ? vbl[localeId] : null, localeId }
+        } else {
+          fieldData[fid] = entry
+        }
       } else {
         fieldData[fid] = entry
       }
@@ -192,6 +201,15 @@ function normalizeFieldData(fieldData: Record<string, any>): Record<string, any>
     if (!entry) { result[id] = entry; continue }
     const { type, value } = entry
     switch (type) {
+      case 'formattedText': {
+        const localeId = (entry as any).localeId
+        if (localeId) {
+          result[id] = { type: 'formattedText', valueByLocale: { [localeId]: entry.value } }
+        } else {
+          result[id] = entry
+        }
+        break
+      }
       case 'image':
       case 'file':
         // framer-api expects a URL string, not an object
