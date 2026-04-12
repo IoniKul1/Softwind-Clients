@@ -69,10 +69,16 @@ describe('PATCH /api/onboarding', () => {
 
   it('returns 200 and merges section data on success', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
-    mockSingle.mockResolvedValue({ data: { onboarding_data: { colors: [] } }, error: null })
+    mockSingle.mockResolvedValue({ data: { id: 'proj-1', onboarding_data: { colors: [] } }, error: null })
     const res = await PATCH(makeRequest({ section: 'brand', data: { logo_url: 'https://x.com/logo.png' } }))
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.ok).toBe(true)
+    expect(mockUpdate).toHaveBeenCalledWith({
+      onboarding_data: {
+        colors: [],
+        brand: { logo_url: 'https://x.com/logo.png' },
+      },
+    })
   })
 })

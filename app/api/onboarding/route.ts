@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest) {
 
   const { data: project, error: fetchError } = await adminClient
     .from('projects')
-    .select('onboarding_data')
+    .select('id, onboarding_data')
     .eq('client_user_id', user.id)
     .single()
 
@@ -34,10 +34,10 @@ export async function PATCH(req: NextRequest) {
   const { error: updateError } = await adminClient
     .from('projects')
     .update({ onboarding_data: updated })
-    .eq('client_user_id', user.id)
+    .eq('id', project.id)
 
   if (updateError) {
-    return NextResponse.json({ error: 'Error al guardar' }, { status: 500 })
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
