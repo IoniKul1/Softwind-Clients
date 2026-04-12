@@ -64,12 +64,19 @@ describe('PATCH /api/project-status', () => {
     expect(res.status).toBe(400)
   })
 
+  it('returns 400 when no updatable fields are provided', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: adminUser } })
+    const res = await PATCH(makeRequest({ clientId: 'c-1' }))
+    expect(res.status).toBe(400)
+  })
+
   it('updates project_status successfully', async () => {
     mockGetUser.mockResolvedValue({ data: { user: adminUser } })
     const res = await PATCH(makeRequest({ clientId: 'c-1', project_status: 'en_desarrollo' }))
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.ok).toBe(true)
+    expect(mockAdminUpdate).toHaveBeenCalledWith({ project_status: 'en_desarrollo' })
   })
 
   it('updates stage successfully', async () => {
