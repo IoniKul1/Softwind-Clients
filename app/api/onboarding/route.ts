@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { ONBOARDING_SECTIONS, isSectionComplete } from '@/lib/onboarding'
+import type { OnboardingData } from '@/lib/types'
 
 const VALID_SECTIONS = ['brand', 'typography', 'colors', 'references', 'previous_site', 'content', 'business']
 
@@ -31,9 +33,13 @@ export async function PATCH(req: NextRequest) {
   const current = (project.onboarding_data as Record<string, unknown>) ?? {}
   const updated = { ...current, [section]: data }
 
+  const allComplete = ONBOARDING_SECTIONS.every(s =>
+    isSectionComplete(updated as OnboardingData, s.key)
+  )
+
   const { error: updateError } = await adminClient
     .from('projects')
-    .update({ onboarding_data: updated })
+    .update({ onboarding_data: updated, onboarding_complete: allComplete })
     .eq('id', project.id)
 
   if (updateError) {

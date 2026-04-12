@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { PATCH } from '@/app/api/onboarding/route'
 import { NextRequest } from 'next/server'
 
-// Mock Supabase server client
 const mockGetUser = vi.fn()
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => Promise.resolve({
@@ -10,7 +9,6 @@ vi.mock('@/lib/supabase/server', () => ({
   })),
 }))
 
-// Mock admin client
 const mockSelect = vi.fn()
 const mockUpdate = vi.fn()
 const mockEq = vi.fn()
@@ -67,18 +65,35 @@ describe('PATCH /api/onboarding', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 200 and merges section data on success', async () => {
+  it('returns 200, merges section data, and sets onboarding_complete false when not all sections done', async () => {
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
-    mockSingle.mockResolvedValue({ data: { id: 'proj-1', onboarding_data: { colors: [] } }, error: null })
+    mockSingle.mockResolvedValue({ data: { id: 'proj-1', onboarding_data: {} }, error: null })
     const res = await PATCH(makeRequest({ section: 'brand', data: { logo_url: 'https://x.com/logo.png' } }))
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.ok).toBe(true)
-    expect(mockUpdate).toHaveBeenCalledWith({
-      onboarding_data: {
-        colors: [],
-        brand: { logo_url: 'https://x.com/logo.png' },
-      },
-    })
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      onboarding_data: { brand: { logo_url: 'https://x.com/logo.png' } },
+      onboarding_complete: false,
+    }))
+  })
+
+  it('sets onboarding_complete true when all 7 sections are present and complete', async () => {
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+    const existing = {
+      brand: { logo_url: 'https://x.com/logo.png' },
+      typography: { display_name: 'Playfair' },
+      colors: [{ name: 'Azul', hex: '#3B5BF6' }],
+      references: [{ url: 'https://example.com' }],
+      previous_site: { na: true },
+      content: { notes: 'some notes' },
+    }
+    mockSingle.mockResolvedValue({ data: { id: 'proj-1', onboarding_data: existing }, error: null })
+    const businessData = { industry: 'Tech', audience: 'SMBs', tone: 'Formal' }
+    const res = await PATCH(makeRequest({ section: 'business', data: businessData }))
+    expect(res.status).toBe(200)
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      onboarding_complete: true,
+    }))
   })
 })
