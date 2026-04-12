@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import ProjectStatusSelector from './ProjectStatusSelector'
 import { ONBOARDING_SECTIONS, isSectionComplete } from '@/lib/onboarding'
 import type { ProjectStatus, ProjectStage, OnboardingData } from '@/lib/types'
+import OnboardingSectionViewer from './OnboardingSectionViewer'
 
 interface ProjectData {
   id: string
@@ -148,9 +149,9 @@ export default function AdminOnboardingTab({ clientId, project }: Props) {
                   </span>
                 </div>
                 {done && sectionData && (
-                  <pre className="text-xs text-neutral-500 overflow-auto max-h-24 whitespace-pre-wrap">
-                    {JSON.stringify(sectionData, null, 2)}
-                  </pre>
+                  <div className="mt-2">
+                    <OnboardingSectionViewer sectionKey={key} data={sectionData} />
+                  </div>
                 )}
               </div>
             )
