@@ -18,7 +18,14 @@ export default function OnboardingChecklist({ data }: Props) {
         <h2 className="text-sm font-semibold text-white">Tu información</h2>
         <span className="text-xs text-neutral-500">{completed} de {total}</span>
       </div>
-      <div className="h-1.5 bg-neutral-800 rounded-full mb-5 overflow-hidden">
+      <div
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Progreso del onboarding"
+        className="h-1.5 bg-neutral-800 rounded-full mb-5 overflow-hidden"
+      >
         <div
           className="h-full bg-indigo-500 rounded-full transition-all"
           style={{ width: `${pct}%` }}
@@ -31,12 +38,16 @@ export default function OnboardingChecklist({ data }: Props) {
             <Link
               key={key}
               href={`/onboarding/${key}`}
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800/50 transition"
+              aria-label={`${label} — ${done ? 'Completo' : 'Pendiente'}`}
+              className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800/50 transition-colors"
             >
               <span className={`text-sm ${done ? 'text-neutral-300' : 'text-neutral-500'}`}>
                 {label}
               </span>
-              <span className={`text-xs font-medium ${done ? 'text-green-400' : 'text-amber-500'}`}>
+              <span
+                aria-label={done ? 'Completo' : 'Pendiente'}
+                className={`text-xs font-medium ${done ? 'text-green-400' : 'text-amber-500'}`}
+              >
                 {done ? '✓ Completo' : '⏳ Pendiente'}
               </span>
             </Link>
