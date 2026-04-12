@@ -94,6 +94,17 @@ export default function AdminSidebar({ clients }: { clients: Client[] }) {
               {isActive && (
                 <div className="ml-4 mt-0.5 mb-1 flex flex-col gap-0.5 border-l border-neutral-800 pl-3">
                   <Link
+                    href={`/admin/clients/${client.id}/onboarding`}
+                    onClick={() => setIsOpen(false)}
+                    className={`text-xs py-1.5 px-2 rounded-md transition ${
+                      pathname.includes('/onboarding')
+                        ? 'text-white bg-neutral-800'
+                        : 'text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900'
+                    }`}
+                  >
+                    Onboarding
+                  </Link>
+                  <Link
                     href={`/admin/clients/${client.id}/collections`}
                     onClick={() => setIsOpen(false)}
                     className={`text-xs py-1.5 px-2 rounded-md transition ${
