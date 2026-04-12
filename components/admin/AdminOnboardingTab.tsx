@@ -62,6 +62,11 @@ export default function AdminOnboardingTab({ clientId, project }: Props) {
   async function handleMeetingUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    const MAX_BYTES = 50 * 1024 * 1024 // 50 MB
+    if (file.size > MAX_BYTES) {
+      setMeetingError('El archivo supera el límite de 50 MB')
+      return
+    }
     setUploadingMeeting(true)
     setMeetingError(null)
     try {
