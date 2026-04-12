@@ -141,7 +141,7 @@ function ColorsViewer({ data }: { data: OnboardingData['colors'] }) {
             style={{ backgroundColor: color.hex }}
           />
           <div className="flex flex-col leading-tight">
-            <span className="text-xs text-neutral-300">{color.name}</span>
+            <span className="text-xs text-neutral-200">{color.name}</span>
             <span className="text-xs text-neutral-500 font-mono">{color.hex}</span>
           </div>
         </div>
