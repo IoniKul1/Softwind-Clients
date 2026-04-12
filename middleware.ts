@@ -35,7 +35,7 @@ export async function middleware(req: NextRequest) {
 
   // Admin: redirect away from client routes
   if (role === 'admin') {
-    const clientPaths = ['/collections', '/analytics', '/requests', '/onboarding']
+    const clientPaths = ['/collections', '/analytics', '/requests', '/onboarding', '/completed']
     if (path === '/' || path === '/login' || clientPaths.some(p => path.startsWith(p))) {
       return NextResponse.redirect(new URL('/admin', req.url))
     }
@@ -47,35 +47,62 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/onboarding', req.url))
   }
 
-  // Client: stage-based routing — only query DB when accessing stage-relevant paths
-  const productionRoutes = ['/collections', '/analytics', '/requests']
-  const needsStageCheck =
+  // Client: stage-based routing
+  const needsCheck =
     path === '/' ||
     path === '/login' ||
     path.startsWith('/onboarding') ||
-    productionRoutes.some(p => path.startsWith(p))
+    path.startsWith('/collections') ||
+    path.startsWith('/analytics') ||
+    path.startsWith('/requests') ||
+    path.startsWith('/completed')
 
-  if (needsStageCheck) {
+  if (needsCheck) {
     const { data: project } = await supabase
       .from('projects')
-      .select('stage')
+      .select('stage, project_status, onboarding_complete')
       .eq('client_user_id', user.id)
       .maybeSingle()
 
-    // Defensive type narrowing — DB has CHECK constraint but middleware is last line of defence.
-    // On DB error, project is null and we default to 'development' (safe-fail).
-    const stage = (project?.stage === 'production') ? 'production' : 'development'
+    const stage = project?.stage === 'production' ? 'production' : 'development'
+    const status = project?.project_status ?? 'pago_recibido'
+    const onboardingComplete = project?.onboarding_complete === true
+
+    // Sin mantenimiento → only /completed
+    if (stage === 'production' && status === 'entregado_sin_mantenimiento') {
+      if (!path.startsWith('/completed')) {
+        return NextResponse.redirect(new URL('/completed', req.url))
+      }
+      return supabaseResponse
+    }
 
     if (stage === 'development') {
-      // Block production routes, redirect everything to /onboarding
-      if (path === '/' || path === '/login' || productionRoutes.some(p => path.startsWith(p))) {
+      // Root → onboarding
+      if (path === '/' || path === '/login') {
         return NextResponse.redirect(new URL('/onboarding', req.url))
       }
-    } else {
-      // Block /onboarding, redirect to /collections
-      if (path === '/' || path === '/login' || path.startsWith('/onboarding')) {
-        return NextResponse.redirect(new URL('/collections', req.url))
+      // CMS only if onboarding complete
+      if (path.startsWith('/collections') && !onboardingComplete) {
+        return NextResponse.redirect(new URL('/onboarding', req.url))
       }
+      // Analytics, requests, completed always blocked in development
+      if (
+        path.startsWith('/analytics') ||
+        path.startsWith('/requests') ||
+        path.startsWith('/completed')
+      ) {
+        return NextResponse.redirect(new URL('/onboarding', req.url))
+      }
+      return supabaseResponse
+    }
+
+    // Production con mantenimiento (or legacy 'entregado') — full access including /onboarding
+    if (path === '/' || path === '/login') {
+      return NextResponse.redirect(new URL('/collections', req.url))
+    }
+    // Block /completed for full-package clients
+    if (path.startsWith('/completed')) {
+      return NextResponse.redirect(new URL('/collections', req.url))
     }
   }
 
