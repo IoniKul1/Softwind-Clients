@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ProjectStatus, ProjectStage } from '@/lib/types'
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
@@ -25,12 +25,15 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
   const [error, setError] = useState<string | null>(null)
   const [pendingStatus, setPendingStatus] = useState<ProjectStatus | null>(null)
 
+  // Re-sync local state when parent provides updated values (e.g., after server revalidation)
+  useEffect(() => { setStatus(currentStatus) }, [currentStatus])
+  useEffect(() => { setStage(currentStage) }, [currentStage])
+
   async function applyStatus(newStatus: ProjectStatus, newStage: ProjectStage) {
     setSaving(true)
     setError(null)
     try {
-      const body: Record<string, unknown> = { clientId, project_status: newStatus }
-      if (newStage !== stage) body.stage = newStage
+      const body: Record<string, unknown> = { clientId, project_status: newStatus, stage: newStage }
       const res = await fetch('/api/project-status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -54,7 +57,8 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
       // Require confirmation before transitioning to production
       setPendingStatus(newStatus)
     } else {
-      applyStatus(newStatus, 'development')
+      // Preserve current stage — only status changes here
+      applyStatus(newStatus, stage)
     }
   }
 
@@ -72,10 +76,13 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
         ))}
       </select>
 
+      {pendingStatus === 'entregado' && (
+        <p className="text-xs text-amber-400 mt-1">Pendiente de confirmación: Entregado y publicado</p>
+      )}
       {saving && <p className="text-xs text-neutral-500 mt-1">Guardando...</p>}
       {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
 
-      {/* Confirmation dialog for entregado */}
+      {/* Confirmation dialog for entregado — transitions stage to production */}
       {pendingStatus === 'entregado' && (
         <div className="mt-4 p-4 bg-amber-900/30 border border-amber-700 rounded-lg">
           <p className="text-sm text-amber-300 font-medium mb-2">
