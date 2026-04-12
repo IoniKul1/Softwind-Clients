@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import OnboardingFileUpload from './OnboardingFileUpload'
 import type {
   OnboardingData, OnboardingBrand, OnboardingTypography,
@@ -19,6 +19,13 @@ export default function OnboardingSection({ sectionKey, label, initialData, user
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (savedTimer.current) clearTimeout(savedTimer.current)
+    }
+  }, [])
 
   const uploadPrefix = `onboarding/${userId}/${sectionKey}`
 
@@ -26,6 +33,7 @@ export default function OnboardingSection({ sectionKey, label, initialData, user
     setSaving(true)
     setSaved(false)
     setError(null)
+    if (savedTimer.current) clearTimeout(savedTimer.current)
     try {
       const res = await fetch('/api/onboarding', {
         method: 'PATCH',
@@ -35,7 +43,7 @@ export default function OnboardingSection({ sectionKey, label, initialData, user
       if (!res.ok) throw new Error('Error al guardar')
       setData(prev => ({ ...prev, [sectionKey]: sectionData }))
       setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
+      savedTimer.current = setTimeout(() => setSaved(false), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
@@ -190,51 +198,59 @@ function TypographyForm({ value, uploadPrefix, onSave, saving }: {
 
 // ─── Colors ──────────────────────────────────────────────────────────────────
 
+type ColorEntry = OnboardingColor & { _id: string }
+
 function ColorsForm({ value, onSave, saving }: {
   value: OnboardingColor[]; onSave: (d: unknown) => void; saving: boolean
 }) {
-  const [colors, setColors] = useState<OnboardingColor[]>(
-    value.length > 0 ? value : [{ name: 'Primario', hex: '#6366f1' }]
-  )
+  const [colors, setColors] = useState<ColorEntry[]>(() => {
+    const seed = value.length > 0 ? value : [{ name: 'Primario', hex: '#6366f1' }]
+    return seed.map(c => ({ ...c, _id: crypto.randomUUID() }))
+  })
 
-  function updateColor(i: number, field: keyof OnboardingColor, val: string) {
-    setColors(cs => cs.map((c, j) => j === i ? { ...c, [field]: val } : c))
+  function updateColor(id: string, field: keyof OnboardingColor, val: string) {
+    setColors(cs => cs.map(c => c._id === id ? { ...c, [field]: val } : c))
   }
 
   function addColor() {
-    setColors(cs => [...cs, { name: '', hex: '#000000' }])
+    setColors(cs => [...cs, { name: '', hex: '#000000', _id: crypto.randomUUID() }])
   }
 
-  function removeColor(i: number) {
-    setColors(cs => cs.filter((_, j) => j !== i))
+  function removeColor(id: string) {
+    setColors(cs => cs.filter(c => c._id !== id))
+  }
+
+  // Strip internal _id before saving
+  function handleSave() {
+    onSave(colors.map(({ _id: _, ...c }) => c))
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {colors.map((color, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 border border-neutral-800 rounded-lg">
+      {colors.map(color => (
+        <div key={color._id} className="flex items-center gap-3 p-3 border border-neutral-800 rounded-lg">
           <input
             type="color"
             value={color.hex}
-            onChange={e => updateColor(i, 'hex', e.target.value)}
+            onChange={e => updateColor(color._id, 'hex', e.target.value)}
             className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent"
           />
           <input
             type="text"
             value={color.hex}
-            onChange={e => updateColor(i, 'hex', e.target.value)}
+            onChange={e => updateColor(color._id, 'hex', e.target.value)}
             placeholder="#000000"
             className="w-24 bg-neutral-800 text-white text-xs px-2 py-1.5 rounded border border-neutral-700 focus:outline-none focus:border-indigo-500 font-mono"
           />
           <input
             type="text"
             value={color.name}
-            onChange={e => updateColor(i, 'name', e.target.value)}
+            onChange={e => updateColor(color._id, 'name', e.target.value)}
             placeholder="ej. Primario"
             className="flex-1 bg-neutral-800 text-white text-sm px-3 py-1.5 rounded border border-neutral-700 focus:outline-none focus:border-indigo-500"
           />
           <button
-            onClick={() => removeColor(i)}
+            onClick={() => removeColor(color._id)}
             className="text-neutral-600 hover:text-red-400 transition text-lg leading-none"
           >
             ×
@@ -247,59 +263,67 @@ function ColorsForm({ value, onSave, saving }: {
       >
         + Agregar color
       </button>
-      <SaveButton onClick={() => onSave(colors)} saving={saving} />
+      <SaveButton onClick={handleSave} saving={saving} />
     </div>
   )
 }
 
 // ─── References ──────────────────────────────────────────────────────────────
 
+type RefEntry = OnboardingReference & { _id: string }
+
 function ReferencesForm({ value, uploadPrefix, onSave, saving }: {
   value: OnboardingReference[]; uploadPrefix: string; onSave: (d: unknown) => void; saving: boolean
 }) {
-  const [refs, setRefs] = useState<OnboardingReference[]>(
-    value.length > 0 ? value : [{}]
-  )
+  const [refs, setRefs] = useState<RefEntry[]>(() => {
+    const seed = value.length > 0 ? value : [{}]
+    return seed.map(r => ({ ...r, _id: crypto.randomUUID() }))
+  })
 
-  function updateRef(i: number, field: keyof OnboardingReference, val: string) {
-    setRefs(rs => rs.map((r, j) => j === i ? { ...r, [field]: val } : r))
+  function updateRef(id: string, field: keyof OnboardingReference, val: string) {
+    setRefs(rs => rs.map(r => r._id === id ? { ...r, [field]: val } : r))
   }
 
   function addRef() {
-    setRefs(rs => [...rs, {}])
+    setRefs(rs => [...rs, { _id: crypto.randomUUID() }])
   }
 
-  function removeRef(i: number) {
-    setRefs(rs => rs.filter((_, j) => j !== i))
+  function removeRef(id: string) {
+    setRefs(rs => rs.filter(r => r._id !== id))
+  }
+
+  // Strip internal _id before saving
+  function handleSave() {
+    onSave(refs.map(({ _id: _, ...r }) => r))
   }
 
   return (
     <div className="flex flex-col gap-4">
       {refs.map((ref, i) => (
-        <div key={i} className="p-4 border border-neutral-800 rounded-lg flex flex-col gap-3">
+        <div key={ref._id} className="p-4 border border-neutral-800 rounded-lg flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs text-neutral-500">Referencia {i + 1}</span>
-            <button onClick={() => removeRef(i)} className="text-neutral-600 hover:text-red-400 transition text-sm">
+            <button onClick={() => removeRef(ref._id)} className="text-neutral-600 hover:text-red-400 transition text-sm">
               Eliminar
             </button>
           </div>
           <TextInput
             label="URL del sitio (opcional)"
             value={ref.url ?? ''}
-            onChange={v => updateRef(i, 'url', v)}
+            onChange={v => updateRef(ref._id, 'url', v)}
             placeholder="https://ejemplo.com"
           />
           <OnboardingFileUpload
             label="Imagen / captura (opcional)"
             currentUrl={ref.image_url}
             accept="image/*"
-            uploadKeyPrefix={`${uploadPrefix}/ref-${i}`}
-            onUploaded={url => setRefs(rs => rs.map((r, j) => j === i ? { ...r, image_url: url } : r))}
+            uploadKeyPrefix={`${uploadPrefix}/ref-${ref._id}`}
+            onUploaded={url => setRefs(rs => rs.map(r => r._id === ref._id ? { ...r, image_url: url } : r))}
           />
           <TextInput
             label="Nota (opcional)"
             value={ref.note ?? ''}
-            onChange={v => updateRef(i, 'note', v)}
+            onChange={v => updateRef(ref._id, 'note', v)}
             placeholder="ej. Me gusta la navegación"
           />
         </div>
@@ -307,7 +331,7 @@ function ReferencesForm({ value, uploadPrefix, onSave, saving }: {
       <button onClick={addRef} className="text-sm text-indigo-400 hover:text-indigo-300 transition text-left">
         + Agregar referencia
       </button>
-      <SaveButton onClick={() => onSave(refs)} saving={saving} />
+      <SaveButton onClick={handleSave} saving={saving} />
     </div>
   )
 }
@@ -371,6 +395,35 @@ function ContentForm({ value, uploadPrefix, onSave, saving }: {
   value: OnboardingContent; uploadPrefix: string; onSave: (d: unknown) => void; saving: boolean
 }) {
   const [form, setForm] = useState(value)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL
+      if (!r2Url) throw new Error('NEXT_PUBLIC_R2_PUBLIC_URL no está configurado')
+      const uploaded: Array<{ url: string; name: string }> = []
+      for (const file of files) {
+        const contentType = file.type || 'application/octet-stream'
+        const key = `${uploadPrefix}/content/${Date.now()}-${file.name}`
+        const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(contentType)}`)
+        if (!res.ok) throw new Error(`Error al obtener URL de subida para ${file.name}`)
+        const { url } = await res.json()
+        const uploadRes = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': contentType } })
+        if (!uploadRes.ok) throw new Error(`Error al subir ${file.name}`)
+        uploaded.push({ url: `${r2Url}/${key}`, name: file.name })
+      }
+      setForm(f => ({ ...f, files: [...(f.files ?? []), ...uploaded] }))
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Error desconocido')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -380,20 +433,12 @@ function ContentForm({ value, uploadPrefix, onSave, saving }: {
           type="file"
           accept=".docx,.pdf,.txt,.doc"
           multiple
-          onChange={async e => {
-            const files = Array.from(e.target.files ?? [])
-            const uploaded: Array<{ url: string; name: string }> = []
-            for (const file of files) {
-              const key = `${uploadPrefix}/content/${Date.now()}-${file.name}`
-              const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(file.type)}`)
-              const { url } = await res.json()
-              await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-              uploaded.push({ url: `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`, name: file.name })
-            }
-            setForm(f => ({ ...f, files: [...(f.files ?? []), ...uploaded] }))
-          }}
-          className="text-xs text-neutral-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-neutral-800 file:text-neutral-200 file:text-xs hover:file:bg-neutral-700 transition"
+          disabled={uploading}
+          onChange={handleFiles}
+          className="text-xs text-neutral-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-neutral-800 file:text-neutral-200 file:text-xs hover:file:bg-neutral-700 transition disabled:opacity-50"
         />
+        {uploading && <p className="text-xs text-neutral-500 mt-1">Subiendo archivos...</p>}
+        {uploadError && <p className="text-xs text-red-400 mt-1">{uploadError}</p>}
         {(form.files ?? []).length > 0 && (
           <ul className="mt-2 flex flex-col gap-1">
             {(form.files ?? []).map((f, i) => (
@@ -415,7 +460,7 @@ function ContentForm({ value, uploadPrefix, onSave, saving }: {
           placeholder="ej. El texto del About está en el documento, las fotos las mandamos por drive..."
         />
       </div>
-      <SaveButton onClick={() => onSave(form)} saving={saving} />
+      <SaveButton onClick={() => onSave(form)} saving={saving || uploading} />
     </div>
   )
 }

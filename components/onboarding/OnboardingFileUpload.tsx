@@ -19,15 +19,17 @@ export default function OnboardingFileUpload({ label, currentUrl, accept, upload
     setUploading(true)
     setError(null)
     try {
+      const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL
+      if (!r2Url) throw new Error('NEXT_PUBLIC_R2_PUBLIC_URL no está configurado')
+      const contentType = file.type || 'application/octet-stream'
       const ext = file.name.split('.').pop() ?? 'bin'
       const key = `${uploadKeyPrefix}/${Date.now()}.${ext}`
-      const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(file.type)}`)
+      const res = await fetch(`/api/upload-url?key=${encodeURIComponent(key)}&contentType=${encodeURIComponent(contentType)}`)
       if (!res.ok) throw new Error('Error al obtener URL de subida')
       const { url } = await res.json()
-      const uploadRes = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
+      const uploadRes = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': contentType } })
       if (!uploadRes.ok) throw new Error('Error al subir archivo')
-      const publicUrl = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`
-      onUploaded(publicUrl)
+      onUploaded(`${r2Url}/${key}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
