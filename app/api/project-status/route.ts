@@ -3,7 +3,14 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { ProjectStatus, ProjectStage } from '@/lib/types'
 
-const VALID_STATUSES: ProjectStatus[] = ['pago_recibido', 'en_desarrollo', 'esperando_feedback', 'entregado']
+const VALID_STATUSES: ProjectStatus[] = [
+  'pago_recibido',
+  'en_desarrollo',
+  'esperando_feedback',
+  'entregado',
+  'entregado_sin_mantenimiento',
+  'entregado_con_mantenimiento',
+]
 const VALID_STAGES: ProjectStage[] = ['development', 'production']
 
 export async function PATCH(req: NextRequest) {
