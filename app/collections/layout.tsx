@@ -17,6 +17,7 @@ export default async function CollectionsLayout({ children }: { children: React.
       <ClientSidebar
         name={profile?.name ?? 'Cliente'}
         websiteUrl={projectRows?.[0]?.website_url ?? null}
+        stage="production"
       />
       <main className="flex-1 px-4 py-6 pt-20 md:px-10 md:py-10 md:pt-10 min-w-0">
         {children}

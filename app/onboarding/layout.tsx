@@ -1,8 +1,9 @@
+// app/onboarding/layout.tsx
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ClientSidebar from '@/components/ClientSidebar'
 
-export default async function RequestsLayout({ children }: { children: React.ReactNode }) {
+export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -17,7 +18,7 @@ export default async function RequestsLayout({ children }: { children: React.Rea
       <ClientSidebar
         name={profile?.name ?? 'Cliente'}
         websiteUrl={projectRows?.[0]?.website_url ?? null}
-        stage="production"
+        stage="development"
       />
       <main className="flex-1 px-4 py-6 pt-20 md:px-10 md:py-10 md:pt-10 min-w-0">
         {children}
