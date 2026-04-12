@@ -52,7 +52,7 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
 
   return (
     <div className="max-w-md">
-      <h2 className="text-xl font-semibold mb-6">Configuración</h2>
+      <h2 className="text-base font-semibold mb-6 text-neutral-300">Configuración del cliente</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className={labelClass}>Nombre</label>
