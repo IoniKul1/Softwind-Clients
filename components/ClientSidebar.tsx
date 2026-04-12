@@ -4,21 +4,25 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from './LogoutButton'
-import type { ProjectStage } from '@/lib/types'
+import type { SidebarMode } from '@/lib/sidebar'
 
 interface Props {
   name: string
   websiteUrl?: string | null
-  stage: ProjectStage
+  mode: SidebarMode
 }
 
-export default function ClientSidebar({ name, websiteUrl, stage }: Props) {
+export default function ClientSidebar({ name, websiteUrl, mode }: Props) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const domain = websiteUrl ? websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '') : null
 
   const navItem = (href: string, label: string, badge?: string) => {
-    const active = pathname === href || (href !== '/collections' && href !== '/onboarding' && pathname.startsWith(href))
+    const active = pathname === href || (
+      href !== '/collections' &&
+      href !== '/onboarding' &&
+      pathname.startsWith(href)
+    )
     return (
       <Link
         href={href}
@@ -36,6 +40,8 @@ export default function ClientSidebar({ name, websiteUrl, stage }: Props) {
       </Link>
     )
   }
+
+  const isProduction = mode === 'production_full'
 
   const sidebar = (
     <aside className={`
@@ -69,11 +75,11 @@ export default function ClientSidebar({ name, websiteUrl, stage }: Props) {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 mt-1 group"
           >
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${stage === 'production' ? 'bg-green-500' : 'bg-amber-500'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isProduction ? 'bg-green-500' : 'bg-amber-500'}`} />
             <span className="text-[11px] text-neutral-500 group-hover:text-neutral-300 transition truncate">{domain}</span>
           </a>
         )}
-        {stage === 'development' && (
+        {!isProduction && (
           <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] px-2 py-0.5 rounded-full bg-indigo-900/50 text-indigo-400 border border-indigo-800">
             En desarrollo
           </span>
@@ -81,10 +87,16 @@ export default function ClientSidebar({ name, websiteUrl, stage }: Props) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {stage === 'development' ? (
-          navItem('/onboarding', 'Mi Sitio')
-        ) : (
+        {mode === 'dev_incomplete' && navItem('/onboarding', 'Mi Sitio')}
+        {mode === 'dev_complete' && (
           <>
+            {navItem('/onboarding', 'Mi Sitio')}
+            {navItem('/collections', 'Content Manager')}
+          </>
+        )}
+        {mode === 'production_full' && (
+          <>
+            {navItem('/onboarding', 'Onboarding')}
             {navItem('/collections', 'Content Manager')}
             {navItem('/analytics', 'Analytics', 'beta')}
             {navItem('/requests', 'Pedidos de cambios')}
