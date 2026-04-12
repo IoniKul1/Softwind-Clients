@@ -68,9 +68,12 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
 
   const selectValue = pendingDelivery ? 'entregado_sin_mantenimiento' : status
 
-  const options = status === 'entregado'
-    ? [...SELECTABLE_STATUSES, 'entregado' as ProjectStatus]
-    : SELECTABLE_STATUSES
+  const options = (() => {
+    const base = [...SELECTABLE_STATUSES]
+    if (status === 'entregado') base.push('entregado')
+    if (status === 'entregado_con_mantenimiento') base.push('entregado_con_mantenimiento')
+    return base
+  })()
 
   return (
     <div>
@@ -115,8 +118,10 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
               <span className="text-indigo-300">Acceso completo: CMS, Analytics, Pedidos y Onboarding.</span>
             </button>
             <button
-              onClick={() => setPendingDelivery(false)}
+              type="button"
+              onClick={() => { setPendingDelivery(false); setError(null) }}
               className="text-xs text-neutral-500 hover:text-neutral-300 mt-1 transition text-left"
+              aria-label="Cancelar entrega"
             >
               Cancelar
             </button>

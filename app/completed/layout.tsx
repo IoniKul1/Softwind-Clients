@@ -1,6 +1,7 @@
 // app/completed/layout.tsx
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import LogoutButton from '@/components/LogoutButton'
 
 export default async function CompletedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -9,18 +10,21 @@ export default async function CompletedLayout({ children }: { children: React.Re
 
   const { data: project } = await supabase
     .from('projects')
-    .select('project_status')
+    .select('stage, project_status')
     .eq('client_user_id', user.id)
     .maybeSingle()
 
-  // Only sin_mantenimiento clients belong here
-  if (project?.project_status !== 'entregado_sin_mantenimiento') {
+  // Only production clients without maintenance belong here
+  if (project?.stage !== 'production' || project?.project_status !== 'entregado_sin_mantenimiento') {
     redirect('/onboarding')
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-950 flex flex-col items-center justify-center px-4">
       {children}
+      <div className="mt-8">
+        <LogoutButton />
+      </div>
     </div>
   )
 }
