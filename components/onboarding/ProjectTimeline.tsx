@@ -8,14 +8,12 @@ const STEPS: { key: ProjectStatus; label: string; description?: string }[] = [
   { key: 'entregado', label: 'Entregado y publicado', description: 'Acceso al plan de mantenimiento 🚀' },
 ]
 
-const STATUS_ORDER: ProjectStatus[] = ['pago_recibido', 'en_desarrollo', 'esperando_feedback', 'entregado']
-
 interface Props {
   status: ProjectStatus
 }
 
 export default function ProjectTimeline({ status }: Props) {
-  const activeIndex = STATUS_ORDER.indexOf(status)
+  const activeIndex = STEPS.findIndex(s => s.key === status)
 
   return (
     <div className="bg-neutral-900 rounded-xl p-6 border border-neutral-800">
@@ -35,7 +33,7 @@ export default function ProjectTimeline({ status }: Props) {
                     : 'bg-neutral-800 border border-neutral-700'
                 }`}>
                   {isDone ? (
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <path d="M2.5 7l3 3 6-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
@@ -59,7 +57,7 @@ export default function ProjectTimeline({ status }: Props) {
                 )}
                 {step.key === 'esperando_feedback' && isActive && (
                   <p className="text-[11px] text-indigo-400 mt-1.5">
-                    ⇄ Vuelve a desarrollo si hay ajustes
+                    <span aria-hidden="true">⇄</span> Vuelve a desarrollo si hay ajustes
                   </p>
                 )}
               </div>
