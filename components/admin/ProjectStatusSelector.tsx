@@ -6,10 +6,17 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
   pago_recibido: 'Pago recibido',
   en_desarrollo: 'En desarrollo',
   esperando_feedback: 'Esperando feedback',
-  entregado: 'Entregado y publicado',
+  entregado: 'Entregado (legacy)',
+  entregado_sin_mantenimiento: 'Listo sin mantenimiento',
+  entregado_con_mantenimiento: 'Listo con mantenimiento',
 }
 
-const ALL_STATUSES: ProjectStatus[] = ['pago_recibido', 'en_desarrollo', 'esperando_feedback', 'entregado']
+const SELECTABLE_STATUSES: ProjectStatus[] = [
+  'pago_recibido',
+  'en_desarrollo',
+  'esperando_feedback',
+  'entregado_sin_mantenimiento',
+]
 
 interface Props {
   clientId: string
@@ -23,9 +30,8 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
   const [stage, setStage] = useState<ProjectStage>(currentStage)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pendingStatus, setPendingStatus] = useState<ProjectStatus | null>(null)
+  const [pendingDelivery, setPendingDelivery] = useState(false)
 
-  // Re-sync local state when parent provides updated values (e.g., after server revalidation)
   useEffect(() => { setStatus(currentStatus) }, [currentStatus])
   useEffect(() => { setStage(currentStage) }, [currentStage])
 
@@ -33,11 +39,10 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
     setSaving(true)
     setError(null)
     try {
-      const body: Record<string, unknown> = { clientId, project_status: newStatus, stage: newStage }
       const res = await fetch('/api/project-status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ clientId, project_status: newStatus, stage: newStage }),
       })
       if (!res.ok) throw new Error('Error al actualizar')
       setStatus(newStatus)
@@ -47,62 +52,71 @@ export default function ProjectStatusSelector({ clientId, currentStatus, current
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setSaving(false)
-      setPendingStatus(null)
+      setPendingDelivery(false)
     }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const newStatus = e.target.value as ProjectStatus
-    if (newStatus === 'entregado') {
-      // Require confirmation before transitioning to production
-      setPendingStatus(newStatus)
+    if (newStatus === 'entregado_sin_mantenimiento') {
+      setPendingDelivery(true)
     } else {
-      // Preserve current stage — only status changes here
+      setPendingDelivery(false)
       applyStatus(newStatus, stage)
     }
   }
+
+  const selectValue = pendingDelivery ? 'entregado_sin_mantenimiento' : status
+
+  const options = status === 'entregado'
+    ? [...SELECTABLE_STATUSES, 'entregado' as ProjectStatus]
+    : SELECTABLE_STATUSES
 
   return (
     <div>
       <label className="block text-xs text-neutral-400 mb-2">Estado del proyecto</label>
       <select
-        value={status}
+        value={selectValue}
         onChange={handleChange}
         disabled={saving}
         className="w-full bg-neutral-800 text-white text-sm px-3 py-2 rounded-lg border border-neutral-700 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
       >
-        {ALL_STATUSES.map(s => (
+        {options.map(s => (
           <option key={s} value={s}>{STATUS_LABELS[s]}</option>
         ))}
       </select>
 
-      {pendingStatus === 'entregado' && (
-        <p className="text-xs text-amber-400 mt-1">Pendiente de confirmación: Entregado y publicado</p>
-      )}
       {saving && <p className="text-xs text-neutral-500 mt-1">Guardando...</p>}
       {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
 
-      {/* Confirmation dialog for entregado — transitions stage to production */}
-      {pendingStatus === 'entregado' && (
+      {pendingDelivery && (
         <div className="mt-4 p-4 bg-amber-900/30 border border-amber-700 rounded-lg">
-          <p className="text-sm text-amber-300 font-medium mb-2">
-            Marcar como entregado y pasar a Producción
-          </p>
+          <p className="text-sm text-amber-300 font-medium mb-1">Elegir tipo de entrega</p>
           <p className="text-xs text-amber-400 mb-4">
-            Esto cambiará la etapa del cliente a <strong>Producción</strong>.
-            El cliente perderá acceso al panel de onboarding y verá el CMS, analytics y pedidos de cambios.
-            ¿Confirmás?
+            El cliente pasará a <strong>Producción</strong>. Elegí qué acceso tendrá.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-2">
             <button
-              onClick={() => applyStatus('entregado', 'production')}
-              className="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium rounded-lg transition"
+              onClick={() => applyStatus('entregado_sin_mantenimiento', 'production')}
+              disabled={saving}
+              aria-label="Sin mantenimiento"
+              className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-medium rounded-lg transition text-left disabled:opacity-50"
             >
-              Sí, confirmar entrega
+              <span className="block font-semibold mb-0.5">Sin mantenimiento</span>
+              <span className="text-neutral-400">El cliente ve la pantalla de "¡Listo!" únicamente.</span>
             </button>
             <button
-              onClick={() => setPendingStatus(null)}
-              className="px-4 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs rounded-lg transition"
+              onClick={() => applyStatus('entregado_con_mantenimiento', 'production')}
+              disabled={saving}
+              aria-label="Con mantenimiento"
+              className="px-4 py-2 bg-indigo-700 hover:bg-indigo-600 text-white text-xs font-medium rounded-lg transition text-left disabled:opacity-50"
+            >
+              <span className="block font-semibold mb-0.5">Con mantenimiento</span>
+              <span className="text-indigo-300">Acceso completo: CMS, Analytics, Pedidos y Onboarding.</span>
+            </button>
+            <button
+              onClick={() => setPendingDelivery(false)}
+              className="text-xs text-neutral-500 hover:text-neutral-300 mt-1 transition text-left"
             >
               Cancelar
             </button>
