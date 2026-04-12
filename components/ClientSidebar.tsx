@@ -19,7 +19,6 @@ export default function ClientSidebar({ name, websiteUrl, stage }: Props) {
 
   const navItem = (href: string, label: string, badge?: string) => {
     const active = pathname === href || (href !== '/collections' && href !== '/onboarding' && pathname.startsWith(href))
-      || pathname === href
     return (
       <Link
         href={href}

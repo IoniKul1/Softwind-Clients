@@ -41,7 +41,13 @@ export default async function AdminRequestsPage({ params }: { params: Promise<{ 
       .single(),
   ])
 
-  const usedMinutes = requests?.reduce((sum, r) => sum + (r.estimated_minutes ?? 0), 0) ?? 0
+  const now = new Date()
+  const usedMinutes = requests
+    ?.filter(r => {
+      const d = new Date(r.created_at)
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    })
+    .reduce((sum, r) => sum + (r.estimated_minutes ?? 0), 0) ?? 0
 
   return (
     <div>
