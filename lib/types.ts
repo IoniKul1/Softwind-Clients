@@ -5,6 +5,8 @@ export type ProjectStatus =
   | 'en_desarrollo'
   | 'esperando_feedback'
   | 'entregado'
+  | 'entregado_sin_mantenimiento'
+  | 'entregado_con_mantenimiento'
 
 export interface OnboardingBrand {
   logo_url?: string
@@ -82,6 +84,7 @@ export interface Project {
   stage: ProjectStage
   project_status: ProjectStatus
   onboarding_data: OnboardingData
+  onboarding_complete: boolean
   admin_notes?: string
   meeting_file_url?: string
 }
