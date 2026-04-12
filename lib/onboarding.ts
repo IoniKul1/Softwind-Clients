@@ -24,6 +24,11 @@ export function isSectionComplete(data: OnboardingData, key: keyof OnboardingDat
     return ps.na === true || (!!ps.url && ps.url.trim() !== '')
   }
 
+  if (key === 'content') {
+    const c = section as { files?: unknown[]; notes?: string }
+    return (c.files !== undefined && c.files.length > 0) || (!!c.notes && c.notes.trim() !== '')
+  }
+
   // For object sections: at least one non-empty value
   const values = Object.values(section as Record<string, unknown>)
   return values.some(v => v !== undefined && v !== null && v !== '')

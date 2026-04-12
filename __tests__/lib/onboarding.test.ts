@@ -52,6 +52,11 @@ describe('isSectionComplete', () => {
     expect(isSectionComplete(data, 'previous_site')).toBe(false)
   })
 
+  it('returns false for content with only an empty files array', () => {
+    const data: OnboardingData = { content: { files: [] } }
+    expect(isSectionComplete(data, 'content')).toBe(false)
+  })
+
   it('ONBOARDING_SECTIONS has 7 entries', () => {
     expect(ONBOARDING_SECTIONS).toHaveLength(7)
   })
