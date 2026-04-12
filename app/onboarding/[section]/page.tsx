@@ -10,19 +10,20 @@ export default async function OnboardingSectionPage({
 }: {
   params: Promise<{ section: string }>
 }) {
-  const { section } = await params
-  const sectionConfig = ONBOARDING_SECTIONS.find(s => s.key === section)
-  if (!sectionConfig) notFound()
-
+  // Auth check first, then validate section — prevents leaking valid route names to unauthenticated users
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { section } = await params
+  const sectionConfig = ONBOARDING_SECTIONS.find(s => s.key === section)
+  if (!sectionConfig) notFound()
 
   const { data: project } = await supabase
     .from('projects')
     .select('onboarding_data')
     .eq('client_user_id', user.id)
-    .single()
+    .maybeSingle()
 
   const onboardingData = (project?.onboarding_data ?? {}) as OnboardingData
 

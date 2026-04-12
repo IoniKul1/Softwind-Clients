@@ -14,7 +14,7 @@ export default async function OnboardingPage() {
     .from('projects')
     .select('project_status, onboarding_data')
     .eq('client_user_id', user.id)
-    .single()
+    .maybeSingle()
 
   const status = (project?.project_status ?? 'pago_recibido') as ProjectStatus
   const onboardingData = (project?.onboarding_data ?? {}) as OnboardingData
