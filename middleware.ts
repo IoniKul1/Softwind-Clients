@@ -62,7 +62,9 @@ export async function middleware(req: NextRequest) {
       .eq('client_user_id', user.id)
       .maybeSingle()
 
-    const stage = project?.stage ?? 'development'
+    // Defensive type narrowing — DB has CHECK constraint but middleware is last line of defence.
+    // On DB error, project is null and we default to 'development' (safe-fail).
+    const stage = (project?.stage === 'production') ? 'production' : 'development'
 
     if (stage === 'development') {
       // Block production routes, redirect everything to /onboarding
