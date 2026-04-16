@@ -255,8 +255,15 @@ export async function createItem(
   })
 }
 
-// Keep old name as alias for backwards compatibility
-export const createItemAndPublish = createItem
+export async function createItemAndPublish(
+  projectUrl: string,
+  apiKey: string,
+  collectionId: string,
+  item: { slug: string; draft?: boolean; fieldData: Record<string, any> }
+): Promise<void> {
+  await createItem(projectUrl, apiKey, collectionId, item)
+  await publishProject(projectUrl, apiKey)
+}
 
 export async function deleteItemAndPublish(
   projectUrl: string,

@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/crypto'
 import { createItemAndPublish } from '@/lib/framer'
 
 export const runtime = 'nodejs'
+export const maxDuration = 300
 
 export async function POST(
   req: NextRequest,
