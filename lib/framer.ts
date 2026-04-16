@@ -262,7 +262,13 @@ export async function createItemAndPublish(
   item: { slug: string; draft?: boolean; fieldData: Record<string, any> }
 ): Promise<void> {
   await createItem(projectUrl, apiKey, collectionId, item)
-  await publishProject(projectUrl, apiKey)
+  // Publish is best-effort: if the project has blocking validation errors,
+  // the item is still saved in the CMS and can be published manually later.
+  try {
+    await publishProject(projectUrl, apiKey)
+  } catch (e) {
+    console.warn('[framer] publish after createItem failed:', e)
+  }
 }
 
 export async function deleteItemAndPublish(

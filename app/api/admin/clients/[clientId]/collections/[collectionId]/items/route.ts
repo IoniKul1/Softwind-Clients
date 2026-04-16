@@ -35,6 +35,10 @@ export async function POST(
     await createItemAndPublish(project.framer_project_url, apiKey, collectionId, { slug, fieldData })
     return NextResponse.json({ ok: true })
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? String(e) }, { status: 500 })
+    console.error('[admin:items:create] failed:', e)
+    return NextResponse.json(
+      { error: 'Los servidores de Framer parecen estar caídos. Volvé a intentarlo en unos minutos.' },
+      { status: 503 }
+    )
   }
 }
