@@ -47,6 +47,7 @@ export default async function AdminEditItemPage({
         deleteUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/items/${itemId}`}
         backUrl={`/admin/clients/${clientId}/collections/${collectionId}`}
         uploadPrefix={`clients/${clientId}/${collectionId}/${item.slug}`}
+        publishUrl={`/api/admin/clients/${clientId}/collections/${collectionId}/publish`}
       />
     </div>
   )
