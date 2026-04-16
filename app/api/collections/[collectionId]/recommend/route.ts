@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { buildSeeds, collectSuggestions } from '@/lib/autocomplete'
+import { decrypt } from '@/lib/crypto'
+import { getItemsMeta } from '@/lib/framer'
 import type { OnboardingData } from '@/lib/types'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -13,12 +15,13 @@ const SYSTEM_PROMPT = `Sos NOA, la IA de Softwind (agencia de diseño web argent
 Tu tarea: proponer UN tema de blog con alto potencial de posicionamiento orgánico para el cliente específico que se te describe.
 
 Criterios que debés aplicar (en este orden):
-1. Evidencia: si se te entrega una lista de "Búsquedas reales en Google", ANCLÁ la recomendación en una de esas queries. Son lo que la gente tipea hoy.
-2. Intención de búsqueda: priorizá keywords informacionales o comerciales con intención clara ("cómo", "cuánto cuesta", "mejores", "guía", "vs", "para"). Evitá temas vagos o inspiracionales.
-3. Relevancia al negocio: el tema tiene que atraer a los clientes potenciales descritos, no a cualquiera.
-4. Long-tail específico (3-5 palabras) antes que cabeceras genéricas. Un nicho bien acotado rankea antes que uno genérico.
-5. Conversión: el lector del artículo tiene que poder convertirse en cliente del negocio descrito.
-6. Localización: si el cliente es regional, incluí geo-modificadores (Argentina, Buenos Aires, CABA) cuando corresponda.
+1. No repetir: si se te entrega "Temas ya publicados", tu recomendación no puede solaparse con ninguno de ellos. Buscá un ángulo nuevo o un nicho adyacente que todavía no esté cubierto.
+2. Evidencia: si se te entrega una lista de "Búsquedas reales en Google", ANCLÁ la recomendación en una de esas queries. Son lo que la gente tipea hoy.
+3. Intención de búsqueda: priorizá keywords informacionales o comerciales con intención clara ("cómo", "cuánto cuesta", "mejores", "guía", "vs", "para"). Evitá temas vagos o inspiracionales.
+4. Relevancia al negocio: el tema tiene que atraer a los clientes potenciales descritos, no a cualquiera.
+5. Long-tail específico (3-5 palabras) antes que cabeceras genéricas. Un nicho bien acotado rankea antes que uno genérico.
+6. Conversión: el lector del artículo tiene que poder convertirse en cliente del negocio descrito.
+7. Localización: si el cliente es regional, incluí geo-modificadores (Argentina, Buenos Aires, CABA) cuando corresponda.
 
 Devolvé SOLO este JSON, sin markdown, sin texto adicional:
 {
@@ -30,7 +33,7 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ collectionId: string }> }
 ) {
-  await params
+  const { collectionId } = await params
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -38,7 +41,7 @@ export async function POST(
 
   const { data: project } = await supabase
     .from('projects')
-    .select('name, website_url, onboarding_data')
+    .select('name, website_url, onboarding_data, framer_project_url, framer_api_key_encrypted')
     .eq('client_user_id', user.id)
     .single()
 
@@ -47,7 +50,19 @@ export async function POST(
   const competitors = (business.competitors ?? []).filter(Boolean).slice(0, 5)
 
   const seeds = buildSeeds(business.industry ?? '', business.audience)
-  const suggestions = seeds.length > 0 ? await collectSuggestions(seeds) : []
+
+  // Fan out in parallel: autocomplete queries + existing items from Framer.
+  // Framer fetch is best-effort — if it fails we still give a recommendation.
+  const existingSlugsPromise = project?.framer_project_url && project?.framer_api_key_encrypted
+    ? getItemsMeta(project.framer_project_url, decrypt(project.framer_api_key_encrypted), collectionId)
+        .then(items => items.map(i => i.slug).filter(Boolean).slice(0, 30))
+        .catch(() => [] as string[])
+    : Promise.resolve([] as string[])
+
+  const [suggestions, existingSlugs] = await Promise.all([
+    seeds.length > 0 ? collectSuggestions(seeds) : Promise.resolve([] as string[]),
+    existingSlugsPromise,
+  ])
 
   const contextLines = [
     project?.name && `Nombre del negocio: ${project.name}`,
@@ -60,6 +75,9 @@ export async function POST(
 
   const sections: string[] = []
   if (contextLines.length > 0) sections.push(`Cliente:\n${contextLines.join('\n')}`)
+  if (existingSlugs.length > 0) {
+    sections.push(`Temas ya publicados en este blog (NO repitas ni solapés):\n- ${existingSlugs.join('\n- ')}`)
+  }
   if (suggestions.length > 0) {
     sections.push(`Búsquedas reales en Google (autocomplete, es-AR) asociadas al rubro:\n- ${suggestions.join('\n- ')}`)
   }
