@@ -16,6 +16,9 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
   const [form, setForm] = useState({
     name: defaultName,
     email: defaultEmail,
@@ -27,6 +30,20 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
 
   function set(field: string, value: string) {
     setForm(f => ({ ...f, [field]: value }))
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    setError('')
+    const res = await fetch(`/api/admin/clients/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error ?? 'Error al eliminar')
+      setDeleting(false)
+      return
+    }
+    router.push('/admin')
+    router.refresh()
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -87,6 +104,56 @@ export default function EditClientForm({ id, defaultName, defaultEmail, defaultP
           {loading ? 'Guardando...' : 'Guardar cambios →'}
         </button>
       </form>
+
+      <div className="mt-12 pt-6 border-t border-red-900/40">
+        <h3 className="text-sm font-semibold text-red-400 mb-1">Zona peligrosa</h3>
+        <p className="text-xs text-neutral-500 mb-4">
+          Eliminar este cliente borra su cuenta, proyecto, onboarding, analytics y todos sus pedidos. Esta acción no se puede deshacer.
+        </p>
+
+        {!confirmDelete ? (
+          <button
+            type="button"
+            onClick={() => { setConfirmDelete(true); setError('') }}
+            className="py-2.5 px-4 border border-red-900/60 text-red-400 font-medium rounded-full text-sm hover:bg-red-950/40 transition"
+          >
+            Eliminar cliente
+          </button>
+        ) : (
+          <div className="flex flex-col gap-3 p-4 rounded-xl border border-red-900/50 bg-red-950/20">
+            <p className="text-xs text-neutral-300">
+              Escribí <span className="font-mono text-red-300">ELIMINAR</span> para confirmar la eliminación de <span className="font-medium">{defaultName}</span>.
+            </p>
+            <input
+              className={inputClass}
+              value={confirmText}
+              onChange={e => setConfirmText(e.target.value)}
+              placeholder="ELIMINAR"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting || confirmText !== 'ELIMINAR'}
+                className="py-2.5 px-4 bg-red-600 text-white font-medium rounded-full text-sm disabled:opacity-30 hover:bg-red-500 transition"
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar definitivamente'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setConfirmDelete(false); setConfirmText(''); setError('') }}
+                disabled={deleting}
+                className="py-2.5 px-4 border border-neutral-700 text-neutral-300 font-medium rounded-full text-sm hover:bg-neutral-900 transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {error && confirmDelete && <p className="text-red-400 text-xs mt-3">{error}</p>}
+      </div>
     </div>
   )
 }

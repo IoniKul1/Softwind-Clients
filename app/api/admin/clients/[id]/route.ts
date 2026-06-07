@@ -58,3 +58,33 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   return NextResponse.json({ ok: true })
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.app_metadata?.role !== 'admin') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Prevent an admin from deleting their own account
+  if (user.id === id) {
+    return NextResponse.json({ error: 'No podés eliminar tu propia cuenta' }, { status: 400 })
+  }
+
+  const adminClient = createAdminClient()
+
+  // Only allow deleting client accounts, never other admins
+  const { data: profile } = await adminClient.from('profiles').select('role').eq('id', id).single()
+  if (profile?.role === 'admin') {
+    return NextResponse.json({ error: 'No se puede eliminar una cuenta de administrador' }, { status: 400 })
+  }
+
+  // Deleting the auth user cascades to profiles → projects → change_requests
+  // (all referenced with `on delete cascade`)
+  const { error } = await adminClient.auth.admin.deleteUser(id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
